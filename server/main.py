@@ -27,7 +27,7 @@ def init_server_data():
     # Create users table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
-            username TEXT PRIMARY KEY NOT NULL,
+            username TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL
         )
     ''')
@@ -64,7 +64,7 @@ def get_users():
 
 def main():
     init_server_data()
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    app.run(host='0.0.0.0', port=8000)
     
 if __name__ == '__main__':
     main()
