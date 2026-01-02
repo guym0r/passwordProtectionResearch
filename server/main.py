@@ -1,20 +1,63 @@
 from flask import Flask, jsonify
 import json
 import os
+import sqlite3
+import atexit
 
 app = Flask(__name__)
 
+
+def close_db(conn):
+    conn.close()
+
 def init_server_data():
-    """Load users.json file"""
+    """Load users.json file, create SQLite database and save users data"""
+    # Load JSON file
     users_file_path = os.path.join(os.path.dirname(__file__), 'users.json')
     with open(users_file_path, 'r') as f:
         users_data = json.load(f)
-    app.config['USERS_DATA'] = users_data
+    
+    # Create SQLite database and keep connection open
+    db_path = os.path.join(os.path.dirname(__file__), 'users.db')
+    conn = sqlite3.connect(db_path, check_same_thread=False)
+    conn.row_factory = sqlite3.Row  # This allows column access by name
+    cursor = conn.cursor()
+    
+    # Create users table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY NOT NULL,
+            password TEXT NOT NULL
+        )
+    ''')
+    
+    # Insert users data into database
+    for user in users_data['users']:
+        cursor.execute('''
+            INSERT OR REPLACE INTO users (username, password)
+            VALUES (?, ?)
+        ''', (user['username'], user['password']))
+    
+    conn.commit()
+    
+    # Store database connection in app config (keep it open for server lifetime)
+    app.config['DB_CONN'] = conn
+    
+    atexit.register(close_db)
 
 @app.route('/get_users', methods=['GET'])
 def get_users():
-    """Endpoint that returns the users as JSON"""
-    return jsonify(app.config['USERS_DATA'])
+    """Endpoint that returns the users as JSON from database"""
+    conn = app.config['DB_CONN']
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT username, password FROM users')
+    rows = cursor.fetchall()
+    
+    # Convert rows to list of dictionaries
+    users = [{'username': row['username'], 'password': row['password']} for row in rows]
+    
+    return jsonify({'users': users})
 
 def main():
     init_server_data()
