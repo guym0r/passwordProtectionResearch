@@ -6,9 +6,10 @@ import atexit
 
 app = Flask(__name__)
 
-
-def close_db(conn):
+def close_db(conn, db_path):
     conn.close()
+    if os.path.exists(db_path):
+        os.remove(db_path)
 
 def init_server_data():
     """Load users.json file, create SQLite database and save users data"""
@@ -40,9 +41,11 @@ def init_server_data():
     
     conn.commit()
     
-    # Store database connection in app config (keep it open for server lifetime)
+    # Store database connection and path in app config (keep it open for server lifetime)
     app.config['DB_CONN'] = conn
+    app.config['DB_PATH'] = db_path
     
+    # Set cleanup function to close connection and delete db file on exit
     atexit.register(close_db)
 
 @app.route('/get_users', methods=['GET'])
