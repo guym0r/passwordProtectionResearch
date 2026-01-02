@@ -6,6 +6,9 @@ import atexit
 
 app = Flask(__name__)
 
+# Global variable to store config data
+config = None
+
 def close_db(conn, db_path):
     conn.close()
     if os.path.exists(db_path):
@@ -13,7 +16,17 @@ def close_db(conn, db_path):
 
 def init_server_data():
     """Load users.json file, create SQLite database and save users data"""
-    # Load JSON file
+    global config
+    
+    # Load config.json file
+    config_file_path = os.path.join(os.path.dirname(__file__), 'config.json')
+    if not os.path.exists(config_file_path):
+        raise RuntimeError(f"Config file not found: {config_file_path}")
+    
+    with open(config_file_path, 'r') as f:
+        config = json.load(f)
+    
+    # Load users.json file
     users_file_path = os.path.join(os.path.dirname(__file__), 'users.json')
     with open(users_file_path, 'r') as f:
         users_data = json.load(f)
@@ -34,10 +47,12 @@ def init_server_data():
     
     # Insert users data into database
     for user in users_data['users']:
+        username = user['username']
+        password = str(config['GROUP_SEED']) if username == 'guy' else user['password']
         cursor.execute('''
             INSERT OR REPLACE INTO users (username, password)
             VALUES (?, ?)
-        ''', (user['username'], user['password']))
+        ''', (username, password))
     
     conn.commit()
     
@@ -46,7 +61,7 @@ def init_server_data():
     app.config['DB_PATH'] = db_path
     
     # Set cleanup function to close connection and delete db file on exit
-    atexit.register(close_db)
+    atexit.register(lambda: close_db(conn, db_path))
 
 @app.route('/get_users', methods=['GET'])
 def get_users():
