@@ -1,4 +1,4 @@
 {
   "GROUP_SEED": "206360893",
-  "PASSWORD_HASH_TYPE": "plaintext"
+  "PASSWORD_HASH_TYPE": "sha256-salt"
 }

@@ -33,13 +33,17 @@ def create_new_user(username, password):
     # Get password hash type from config
     password_hash_type = app.config['CONFIG']['PASSWORD_HASH_TYPE']
     
-    # Get handler from dictionary
-    handler = PASSWORD_HANDLERS[password_hash_type]
-    if not handler:
+    # Get handler tuple from dictionary
+    if password_hash_type not in PASSWORD_HANDLERS:
         raise RuntimeError(f'Unknown password hash type: {password_hash_type}')
     
+    prepare_handler, handler = PASSWORD_HANDLERS[password_hash_type]
+    
+    # Call prepare handler and get handler info (is_new_user=True for creating new user)
+    handler_info = prepare_handler(is_new_user=True)
+    
     # Process password using handler
-    hashed_password = handler(password, app.config['CONFIG'])
+    hashed_password = handler(password, handler_info)
     
     # Insert new user
     cursor.execute('''
@@ -156,16 +160,22 @@ def login():
     # Get password hash type from config
     password_hash_type = app.config['CONFIG']['PASSWORD_HASH_TYPE']
     
-    # Get handler from dictionary
-    handler = PASSWORD_HANDLERS[password_hash_type]
-    if not handler:
+    # Get handler tuple from dictionary
+    if password_hash_type not in PASSWORD_HANDLERS:
         raise RuntimeError(f'Unknown password hash type: {password_hash_type}')
     
+    prepare_handler, handler = PASSWORD_HANDLERS[password_hash_type]
+    
+    # Get stored password
+    stored_password = user['password']
+    
+    # Call prepare handler and get handler info (is_new_user=False for login)
+    handler_info = prepare_handler(is_new_user=False, stored_password=stored_password)
+    
     # Process input password using handler
-    hashed_password = handler(password, app.config['CONFIG'])
+    hashed_password = handler(password, handler_info)
     
     # Compare with stored password
-    stored_password = user['password']
     if hashed_password == stored_password:
         return jsonify({'message': 'Login successful', 'username': username}), 200
     else:
