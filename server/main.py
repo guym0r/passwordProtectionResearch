@@ -6,6 +6,7 @@ import atexit
 from enum import Enum
 from datetime import datetime
 from password_handlers import PASSWORD_HANDLERS
+from security_hooks import run_pre_login_hooks, run_post_login_hooks
 
 app = Flask(__name__)
 
@@ -180,6 +181,12 @@ def login():
     if not username or not password:
         return jsonify({'error': 'Username and password are required'}), 400
     
+    # Run pre-login security hooks
+    allowed, error_msg = run_pre_login_hooks(username, password, app.config['CONFIG'])
+    if not allowed:
+        log_login_attempt(username, False)
+        return jsonify({'error': error_msg or 'Login denied by security check'}), 403
+    
     conn = app.config['DB_CONN']
     cursor = conn.cursor()
     
@@ -212,6 +219,12 @@ def login():
     
     # Compare with stored password
     success = hashed_password == stored_password
+    
+    # Run post-login security hooks
+    allowed, error_msg = run_post_login_hooks(username, password, success, app.config['CONFIG'])
+    if not allowed:
+        log_login_attempt(username, False)
+        return jsonify({'error': error_msg or 'Login denied by security check'}), 403
     
     # Log login attempt
     log_login_attempt(username, success)
