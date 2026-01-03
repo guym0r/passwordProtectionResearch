@@ -133,6 +133,44 @@ def register():
     
     return jsonify({'message': 'User registered successfully', 'username': username}), 200
 
+@app.route('/login', methods=['GET'])
+def login():
+    """Login endpoint - validates username and password"""
+    # Get username and password from query parameters
+    username = request.args.get('username')
+    password = request.args.get('password')
+    
+    if not username or not password:
+        return jsonify({'error': 'Username and password are required'}), 400
+    
+    conn = app.config['DB_CONN']
+    cursor = conn.cursor()
+    
+    # Look for the user in the database
+    cursor.execute('SELECT username, password FROM users WHERE username = ?', (username,))
+    user = cursor.fetchone()
+    
+    if not user:
+        return jsonify({'error': 'Invalid username or password'}), 400
+    
+    # Get password hash type from config
+    password_hash_type = app.config['CONFIG']['PASSWORD_HASH_TYPE']
+    
+    # Get handler from dictionary
+    handler = PASSWORD_HANDLERS[password_hash_type]
+    if not handler:
+        raise RuntimeError(f'Unknown password hash type: {password_hash_type}')
+    
+    # Process input password using handler
+    hashed_password = handler(password, app.config['CONFIG'])
+    
+    # Compare with stored password
+    stored_password = user['password']
+    if hashed_password == stored_password:
+        return jsonify({'message': 'Login successful', 'username': username}), 200
+    else:
+        return jsonify({'error': 'Invalid username or password'}), 400
+
 def main():
     init_server_data()
     app.run(host='0.0.0.0', port=8000)
