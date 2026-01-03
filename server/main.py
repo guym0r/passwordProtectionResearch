@@ -4,6 +4,7 @@ import os
 import sqlite3
 import atexit
 from enum import Enum
+from datetime import datetime
 from password_handlers import PASSWORD_HANDLERS
 
 app = Flask(__name__)
@@ -16,6 +17,30 @@ def close_db(conn, db_path):
     conn.close()
     if os.path.exists(db_path):
         os.remove(db_path)
+
+def close_log_file():
+    if 'LOG_FILE' in app.config:
+        app.config['LOG_FILE'].close()
+
+def log_login_attempt(username, success):
+    """Log login attempt to attempts.log file in JSON format"""
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    group_seed = app.config['CONFIG']['GROUP_SEED']
+    hashmode = app.config['CONFIG']['PASSWORD_HASH_TYPE']
+    
+    log_entry = {
+        'timestamp': timestamp,
+        'group_seed': group_seed,
+        'username': username,
+        'result': success,
+        'hashmode': hashmode
+    }
+    
+    # Write to the open log file as JSON (one line per entry)
+    log_file = app.config.get('LOG_FILE')
+    if log_file:
+        log_file.write(json.dumps(log_entry) + '\n')
+        log_file.flush()  # Ensure data is written immediately
 
 
 def create_new_user(username, password):
@@ -92,6 +117,14 @@ def init_server_data():
     app.config['DB_CONN'] = conn
     app.config['DB_PATH'] = db_path
     
+    # Open attempts.log file and keep it open
+    log_file_path = os.path.join(os.path.dirname(__file__), 'attempts.log')
+    log_file = open(log_file_path, 'a')
+    app.config['LOG_FILE'] = log_file
+    
+    # Register cleanup function to close log file on exit
+    atexit.register(close_log_file)
+    
     # Insert users data into database using create_new_user
     for user in users_data['users']:
         username = user['username']
@@ -155,6 +188,8 @@ def login():
     user = cursor.fetchone()
     
     if not user:
+        # Log failed login attempt (user not found)
+        log_login_attempt(username, False)
         return jsonify({'error': 'Invalid username or password'}), 400
     
     # Get password hash type from config
@@ -176,7 +211,12 @@ def login():
     hashed_password = handler(password, handler_info)
     
     # Compare with stored password
-    if hashed_password == stored_password:
+    success = hashed_password == stored_password
+    
+    # Log login attempt
+    log_login_attempt(username, success)
+    
+    if success:
         return jsonify({'message': 'Login successful', 'username': username}), 200
     else:
         return jsonify({'error': 'Invalid username or password'}), 400
