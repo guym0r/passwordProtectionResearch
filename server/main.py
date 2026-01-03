@@ -1,30 +1,68 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import json
 import os
 import sqlite3
 import atexit
+from enum import Enum
+from password_handlers import PASSWORD_HANDLERS
 
 app = Flask(__name__)
 
-# Global variable to store config data
-config = None
+class UserCreationResult(Enum):
+    USER_ALREADY_DEFINED = "USER_ALREADY_DEFINED"
+    USER_CREATED = "USER_CREATED"
 
 def close_db(conn, db_path):
     conn.close()
     if os.path.exists(db_path):
         os.remove(db_path)
 
+
+def create_new_user(username, password):
+    """Create a new user with password hashing based on config"""
+    conn = app.config['DB_CONN']
+    cursor = conn.cursor()
+    
+    # Check if username already exists
+    cursor.execute('SELECT username FROM users WHERE username = ?', (username,))
+    existing_user = cursor.fetchone()
+    
+    if existing_user:
+        return UserCreationResult.USER_ALREADY_DEFINED
+    
+    # Get password hash type from config
+    password_hash_type = app.config['CONFIG']['PASSWORD_HASH_TYPE']
+    
+    # Get handler from dictionary
+    handler = PASSWORD_HANDLERS[password_hash_type]
+    if not handler:
+        raise RuntimeError(f'Unknown password hash type: {password_hash_type}')
+    
+    # Process password using handler
+    hashed_password = handler(password, app.config['CONFIG'])
+    
+    # Insert new user
+    cursor.execute('''
+        INSERT INTO users (username, password)
+        VALUES (?, ?)
+    ''', (username, hashed_password))
+    
+    conn.commit()
+    
+    return UserCreationResult.USER_CREATED
+
 def init_server_data():
     """Load users.json file, create SQLite database and save users data"""
-    global config
-    
     # Load config.json file
     config_file_path = os.path.join(os.path.dirname(__file__), 'config.json')
     if not os.path.exists(config_file_path):
         raise RuntimeError(f"Config file not found: {config_file_path}")
     
     with open(config_file_path, 'r') as f:
-        config = json.load(f)
+        config_data = json.load(f)
+    
+    # Store config in app.config
+    app.config['CONFIG'] = config_data
     
     # Load users.json file
     users_file_path = os.path.join(os.path.dirname(__file__), 'users.json')
@@ -45,20 +83,17 @@ def init_server_data():
         )
     ''')
     
-    # Insert users data into database
-    for user in users_data['users']:
-        username = user['username']
-        password = str(config['GROUP_SEED']) if username == 'guy' else user['password']
-        cursor.execute('''
-            INSERT OR REPLACE INTO users (username, password)
-            VALUES (?, ?)
-        ''', (username, password))
-    
-    conn.commit()
-    
     # Store database connection and path in app config (keep it open for server lifetime)
+    # This must be done before calling create_new_user
     app.config['DB_CONN'] = conn
     app.config['DB_PATH'] = db_path
+    
+    # Insert users data into database using create_new_user
+    for user in users_data['users']:
+        username = user['username']
+        password = str(app.config['CONFIG']['GROUP_SEED']) if username == 'guy' else user['password']
+        create_new_user(username, password)
+        # Note: USER_ALREADY_DEFINED is expected for existing users during initialization
     
     # Set cleanup function to close connection and delete db file on exit
     atexit.register(lambda: close_db(conn, db_path))
@@ -76,6 +111,27 @@ def get_users():
     users = [{'username': row['username'], 'password': row['password']} for row in rows]
     
     return jsonify({'users': users})
+
+@app.route('/register', methods=['POST'])
+def register():
+    """Register a new user"""
+    # Get username and password from request
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Invalid JSON'}), 400
+    
+    username = data.get('username')
+    password = data.get('password')
+    
+    if not username or not password:
+        return jsonify({'error': 'Username and password are required'}), 400
+    
+    result = create_new_user(username, password)
+    
+    if result == UserCreationResult.USER_ALREADY_DEFINED:
+        return jsonify({'error': 'Username already exists'}), 400
+    
+    return jsonify({'message': 'User registered successfully', 'username': username}), 200
 
 def main():
     init_server_data()

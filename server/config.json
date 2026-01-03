@@ -1,3 +1,4 @@
 {
-  "GROUP_SEED": "206360893"
+  "GROUP_SEED": "206360893",
+  "PASSWORD_HASH_TYPE": "plaintext"
 }
