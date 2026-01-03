@@ -32,39 +32,21 @@ def rate_limit_feature(context):
         
         num_failed_attempts, last_failed_time = FAILED_LOGIN_ATTEMPTS[username]
         now = datetime.now()
+        seconds_since_last_attempt = (now - last_failed_time).total_seconds()
         
         # Find the applicable rate limit rule
         # We want the highest threshold that the user has reached
         # Example: If user has 7 attempts and configs are [5 attempts/10s, 10 attempts/30s]
         #          -> Use the 5 attempts/10s rule (highest threshold <= 7)
-        applicable_rule = None
-        for rule in sorted(rate_limit_configs, key=lambda x: x['attempts'], reverse=True):
-            rule_threshold = rule['attempts']
-            if rule_threshold <= num_failed_attempts:
-                applicable_rule = rule
-                break
-        
+        applicable_rules = list(filter(lambda rule: rule['attempts'] <= num_failed_attempts, rate_limit_configs))
         # If user has fewer attempts than the minimum threshold, no rule applies -> allow login
-        if applicable_rule is None:
+        if not applicable_rules:
             return True
         
-        # Check if user has reached the threshold for this rule
-        required_attempts = applicable_rule['attempts']
-        lockout_seconds = applicable_rule['lockout_seconds']
+        applicable_rule = max(applicable_rules, key=lambda x: x['attempts'])
         
-        if num_failed_attempts < required_attempts:
-            # User hasn't reached the threshold yet -> allow login
-            return True
-        
-        # User has reached threshold -> check if lockout period has passed
-        seconds_since_last_attempt = (now - last_failed_time).total_seconds()
-        
-        if seconds_since_last_attempt >= lockout_seconds:
-            # Lockout period has passed -> allow login attempt
-            return True
-        else:
-            # Still within lockout period -> deny login
-            return False
+        # Check if lockout period has passed
+        return seconds_since_last_attempt >= applicable_rule['lockout_seconds']
     
     elif stage == 'post_login':
         success = context['success']

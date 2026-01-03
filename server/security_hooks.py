@@ -32,7 +32,7 @@ def run_pre_login_hooks(username, password, config):
     }
     
     for feature_name in enabled_security_hooks.keys():
-        feature_func = enabled_security_hooks[feature_name]§
+        feature_func = enabled_security_hooks[feature_name]
         try:
             result = feature_func(context)
             if not result:
@@ -56,7 +56,7 @@ def run_post_login_hooks(username, password, success, config):
         'stage': 'post_login'
     }
     
-    for feature_name in enabled_security_hook.keys():
+    for feature_name in enabled_security_hooks.keys():
         feature_func = enabled_security_hooks[feature_name]
         try:
             result = feature_func(context)
