@@ -7,6 +7,7 @@ from enum import Enum
 from datetime import datetime
 from password_handlers import PASSWORD_HANDLERS
 from security_hooks import run_pre_login_hooks, run_post_login_hooks, init_security_hooks
+from captcha_hook import get_captcha_token
 
 app = Flask(__name__)
 
@@ -184,11 +185,23 @@ def login():
     if not username or not password:
         return jsonify({'error': 'Username and password are required'}), 400
     
+    # Get all request parameters (for hooks that need them, like captcha)
+    request_params = dict(request.args)
+    
     # Run pre-login security hooks
-    allowed, error_msg = run_pre_login_hooks(username, password, app.config['CONFIG'])
+    allowed, error_msg = run_pre_login_hooks(username, password, app.config['CONFIG'], request_params)
     if not allowed:
         log_login_attempt(username, False)
-        return jsonify({'error': error_msg or 'Login denied by security check'}), 403
+        if error_msg:
+            try:
+                # Parse error_msg as JSON and return it
+                error_json = json.loads(error_msg)
+                return jsonify(error_json), 403
+            except (json.JSONDecodeError, TypeError):
+                # If not JSON, wrap in error format
+                return jsonify({'error': error_msg}), 403
+        else:
+            return jsonify({'error': 'Login denied by security check'}), 403
     
     conn = app.config['DB_CONN']
     cursor = conn.cursor()
@@ -224,10 +237,19 @@ def login():
     success = hashed_password == stored_password
     
     # Run post-login security hooks
-    allowed, error_msg = run_post_login_hooks(username, password, success, app.config['CONFIG'])
+    allowed, error_msg = run_post_login_hooks(username, password, success, app.config['CONFIG'], request_params)
     if not allowed:
         log_login_attempt(username, False)
-        return jsonify({'error': error_msg or 'Login denied by security check'}), 403
+        if error_msg:
+            try:
+                # Parse error_msg as JSON and return it
+                error_json = json.loads(error_msg)
+                return jsonify(error_json), 403
+            except (json.JSONDecodeError, TypeError):
+                # If not JSON, wrap in error format
+                return jsonify({'error': error_msg}), 403
+        else:
+            return jsonify({'error': 'Login denied by security check'}), 403
     
     # Log login attempt
     log_login_attempt(username, success)
@@ -236,6 +258,28 @@ def login():
         return jsonify({'message': 'Login successful', 'username': username}), 200
     else:
         return jsonify({'error': 'Invalid username or password'}), 400
+
+@app.route('/admin/get_captcha_token', methods=['GET'])
+def admin_get_captcha_token():
+    """Admin endpoint to get captcha token for a username"""
+    # Get group_seed and username from query parameters
+    group_seed = request.args.get('group_seed')
+    username = request.args.get('username')
+    
+    if not group_seed or not username:
+        return jsonify({'error': 'group_seed and username are required'}), 400
+    
+    # Verify group_seed matches config
+    if group_seed != app.config['CONFIG']['GROUP_SEED']:
+        return jsonify({'error': 'Invalid group_seed'}), 403
+    
+    # Get captcha token for the username
+    captcha_token = get_captcha_token(username)
+    
+    if captcha_token is None:
+        return jsonify({'error': 'No captcha token found for this username'}), 404
+    
+    return jsonify({'username': username, 'captcha_token': captcha_token}), 200
 
 def main():
     init_server_data()

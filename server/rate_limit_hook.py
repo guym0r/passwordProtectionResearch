@@ -1,5 +1,6 @@
 # Rate limiting security hook
 from datetime import datetime
+import json
 
 # Track failed login attempts per user
 # Format: {username: (number_of_failed_login_in_row, last_failed_login_time)}
@@ -28,7 +29,7 @@ def rate_limit_feature(context):
         """
         # No failed attempts recorded -> allow login
         if username not in FAILED_LOGIN_ATTEMPTS:
-            return True
+            return True, ""
         
         num_failed_attempts, last_failed_time = FAILED_LOGIN_ATTEMPTS[username]
         now = datetime.now()
@@ -41,12 +42,20 @@ def rate_limit_feature(context):
         applicable_rules = list(filter(lambda rule: rule['attempts'] <= num_failed_attempts, rate_limit_configs))
         # If user has fewer attempts than the minimum threshold, no rule applies -> allow login
         if not applicable_rules:
-            return True
+            return True, ""
         
         applicable_rule = max(applicable_rules, key=lambda x: x['attempts'])
         
         # Check if lockout period has passed
-        return seconds_since_last_attempt >= applicable_rule['lockout_seconds']
+        if seconds_since_last_attempt >= applicable_rule['lockout_seconds']:
+            return True, ""
+        else:
+            remaining_seconds = int(applicable_rule['lockout_seconds'] - seconds_since_last_attempt)
+            error_json = json.dumps({
+                'error': 'Rate limit exceeded',
+                'retry_after': remaining_seconds
+            })
+            return False, error_json
     
     elif stage == 'post_login':
         success = context['success']
@@ -55,7 +64,7 @@ def rate_limit_feature(context):
         if success:
             # Clear failed attempts on successful login
             if username in FAILED_LOGIN_ATTEMPTS:
-                del FAILED_LOGIN_ATTEMPTS[username]
+                FAILED_LOGIN_ATTEMPTS[username] = (0, now)
         else:
             # Record failed login attempt
             if username not in FAILED_LOGIN_ATTEMPTS:
@@ -66,7 +75,7 @@ def rate_limit_feature(context):
                 num_failed_attempts, _ = FAILED_LOGIN_ATTEMPTS[username]
                 FAILED_LOGIN_ATTEMPTS[username] = (num_failed_attempts + 1, now)
         
-        return True  # Always allow, we're just tracking
+        return True, ""  # Always allow, we're just tracking
     
-    return True
+    return True, ""
 
