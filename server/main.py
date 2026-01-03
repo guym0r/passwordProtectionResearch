@@ -6,7 +6,7 @@ import atexit
 from enum import Enum
 from datetime import datetime
 from password_handlers import PASSWORD_HANDLERS
-from security_hooks import run_pre_login_hooks, run_post_login_hooks
+from security_hooks import run_pre_login_hooks, run_post_login_hooks, init_security_hooks
 
 app = Flask(__name__)
 
@@ -93,6 +93,9 @@ def init_server_data():
     
     # Store config in app.config
     app.config['CONFIG'] = config_data
+    
+    # Initialize security hooks
+    init_security_hooks(config_data)
     
     # Load users.json file
     users_file_path = os.path.join(os.path.dirname(__file__), 'users.json')
