@@ -1,6 +1,7 @@
 # Password hash handlers dictionary
 import hashlib
 import secrets
+import bcrypt
 
 def prepare_plaintext_handler(is_new_user, stored_password=None, config=None):
     """Prepare function for plaintext handler - returns empty dict"""
@@ -46,8 +47,44 @@ def sha256_salt_handler(password, handler_info):
     # Return salt:hash format
     return f"{salt}:{hash_hex}"
 
+def prepare_bcrypt_handler(is_new_user, stored_password=None, config=None):
+    """Prepare function for bcrypt handler"""
+    handler_info = {}
+    
+    if not is_new_user and stored_password:
+        # For login, pass stored hash to handler for verification
+        handler_info['stored_hash'] = stored_password
+    
+    # Add pepper if USE_PEPPER is enabled
+    if config and config.get('USE_PEPPER', False):
+        handler_info['pepper'] = config.get('PEPPER', '')
+    
+    return handler_info
+
+def bcrypt_handler(password, handler_info):
+    """BCrypt handler with cost=12"""
+    stored_hash = handler_info.get('stored_hash')
+    pepper = handler_info.get('pepper', '')
+    
+    # Add pepper to password if present
+    password_with_pepper = password + pepper
+    
+    if stored_hash:
+        # Verify password against stored hash
+        if bcrypt.checkpw(password_with_pepper.encode('utf-8'), stored_hash.encode('utf-8')):
+            return stored_hash  # Return stored hash if verification succeeds
+        else:
+            # Return something that won't match to trigger login failure
+            return ''
+    else:
+        # Generate new hash with cost=12
+        salt = bcrypt.gensalt(rounds=12)
+        hashed = bcrypt.hashpw(password_with_pepper.encode('utf-8'), salt)
+        return hashed.decode('utf-8')
+
 PASSWORD_HANDLERS = {
     'plaintext': (prepare_plaintext_handler, plaintext_handler),
-    'sha256-salt': (prepare_sha256_salt_handler, sha256_salt_handler)
+    'sha256-salt': (prepare_sha256_salt_handler, sha256_salt_handler),
+    'bcrypt': (prepare_bcrypt_handler, bcrypt_handler)
 }
 
