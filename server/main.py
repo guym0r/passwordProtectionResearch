@@ -40,7 +40,7 @@ def create_new_user(username, password):
     prepare_handler, handler = PASSWORD_HANDLERS[password_hash_type]
     
     # Call prepare handler and get handler info (is_new_user=True for creating new user)
-    handler_info = prepare_handler(is_new_user=True, config=app.config['CONFIG'])
+    handler_info = prepare_handler(is_new_user=True, app.config['CONFIG'])
     
     # Process password using handler
     hashed_password = handler(password, handler_info)
@@ -170,7 +170,7 @@ def login():
     stored_password = user['password']
     
     # Call prepare handler and get handler info (is_new_user=False for login)
-    handler_info = prepare_handler(is_new_user=False, stored_password=stored_password, config=app.config['CONFIG'])
+    handler_info = prepare_handler(is_new_user=False, app.config['CONFIG'], stored_password=stored_password)
     
     # Process input password using handler
     hashed_password = handler(password, handler_info)
