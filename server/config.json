@@ -28,7 +28,8 @@
     "THRESHOLD": 5
   },
   "TOTP": {
-    "ISSUER": "web-auth"
+    "ISSUER": "web-auth",
+    "TIME_WINDOW": 1
   },
   "ACCOUNT_LOCKOUT": {
     "THRESHOLD": 5

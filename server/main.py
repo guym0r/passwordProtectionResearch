@@ -332,10 +332,14 @@ def login_totp():
     if not otp_secret:
         return jsonify({'error': 'User does not have TOTP configured'}), 400
     
-    # Verify the TOTP code
+    # Verify the TOTP code with time drift tolerance
     try:
         totp = pyotp.TOTP(otp_secret)
-        is_valid = totp.verify(code)
+        # Get time window from config (default to 1, meaning ±1 time step tolerance)
+        totp_config = app.config['CONFIG']['TOTP']
+        time_window = totp_config['TIME_WINDOW']
+        # Verify with time window tolerance (checks current time ± window time steps)
+        is_valid = totp.verify(code, valid_window=time_window)
         
         if is_valid:
             return jsonify({'message': 'TOTP verification successful', 'username': username}), 200
