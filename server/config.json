@@ -28,9 +28,6 @@
     "THRESHOLD": 5
   },
   "TOTP": {
-    "ISSUER": "web-auth",
-    "ALGORITHM": "SHA1",
-    "DIGITS": 6,
-    "PERIOD": 30
+    "ISSUER": "web-auth"
   }
 }
