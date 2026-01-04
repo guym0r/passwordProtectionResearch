@@ -57,11 +57,11 @@ def prepare_bcrypt_handler(is_new_user, config, stored_password=None):
         handler_info['stored_hash'] = stored_password
     
     # Add bcrypt cost from config (default to 12)
-    handler_info['bcrypt_cost'] = config.get('BCRYPT_COST', 12)
+    handler_info['bcrypt_cost'] = config["BCRYPT"]["COST"]
     
     # Add pepper if USE_PEPPER is enabled
-    if config.get('USE_PEPPER', False):
-        handler_info['pepper'] = config.get('PEPPER', '')
+    if config["USE_PEPPER"]:
+        handler_info['pepper'] = config["PEPPER"]
     
     return handler_info
 
@@ -69,7 +69,7 @@ def bcrypt_handler(password, handler_info):
     """BCrypt handler with configurable cost"""
     stored_hash = handler_info.get('stored_hash')
     pepper = handler_info.get('pepper', '')
-    bcrypt_cost = handler_info.get('bcrypt_cost', 12)
+    bcrypt_cost = handler_info['bcrypt_cost']
     
     # Add pepper to password if present
     password_with_pepper = password + pepper
@@ -96,15 +96,16 @@ def prepare_argon2id_handler(is_new_user, config, stored_password=None):
         handler_info['stored_hash'] = stored_password
     
     # Add Argon2id parameters from config (with defaults)
-    handler_info['time_cost'] = config.get('ARGON2ID_TIME_COST', 1)
-    handler_info['memory_cost'] = config.get('ARGON2ID_MEMORY_COST', 65536)
-    handler_info['parallelism'] = config.get('ARGON2ID_PARALLELISM', 1)
-    handler_info['hash_len'] = config.get('ARGON2ID_HASH_LEN', 32)
-    handler_info['salt_len'] = config.get('ARGON2ID_SALT_LEN', 16)
+    argon2id_config = config['ARGON2ID']
+    handler_info['time_cost'] = argon2id_config['TIME_COST']
+    handler_info['memory_cost'] = argon2id_config['MEMORY_COST']
+    handler_info['parallelism'] = argon2id_config['PARALLELISM']
+    handler_info['hash_len'] = argon2id_config['HASH_LEN']
+    handler_info['salt_len'] = argon2id_config['SALT_LEN']
     
     # Add pepper if USE_PEPPER is enabled
-    if config.get('USE_PEPPER', False):
-        handler_info['pepper'] = config.get('PEPPER', '')
+    if config["USE_PEPPER"]:
+        handler_info['pepper'] = config["PEPPER"]
     
     return handler_info
 
@@ -114,11 +115,11 @@ def argon2id_handler(password, handler_info):
     pepper = handler_info.get('pepper', '')
     
     # Get Argon2id parameters from handler_info
-    time_cost = handler_info.get('time_cost', 1)
-    memory_cost = handler_info.get('memory_cost', 65536)
-    parallelism = handler_info.get('parallelism', 1)
-    hash_len = handler_info.get('hash_len', 32)
-    salt_len = handler_info.get('salt_len', 16)
+    time_cost = handler_info['time_cost']
+    memory_cost = handler_info['memory_cost']
+    parallelism = handler_info['parallelism']
+    hash_len = handler_info['hash_len']
+    salt_len = handler_info['salt_len']
     
     # Add pepper to password if present
     password_with_pepper = password + pepper
