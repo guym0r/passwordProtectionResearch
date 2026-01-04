@@ -9,7 +9,7 @@
   "ARGON2ID_PARALLELISM": 1,
   "ARGON2ID_HASH_LEN": 32,
   "ARGON2ID_SALT_LEN": 16,
-  "ENABLED_SECURITY_FEATURES": ["rate_limit"],
+  "ENABLED_SECURITY_FEATURES": ["captcha"],
   "RATE_LIMIT_CONFIG": [
     {
       "attempts": 5,
@@ -19,5 +19,8 @@
       "attempts": 10,
       "lockout_seconds": 30
     }
-  ]
+  ],
+  "CAPTCHA": {
+    "THRESHOLD": 5
+  }
 }
