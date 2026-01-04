@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, redirect
 import json
 import os
 import sqlite3
@@ -8,8 +8,12 @@ from datetime import datetime
 from password_handlers import PASSWORD_HANDLERS
 from security_hooks import run_pre_login_hooks, run_post_login_hooks, init_security_hooks
 from captcha_hook import get_captcha_token
+import pyotp
 
 app = Flask(__name__)
+
+# Dictionary to track password verification state: {username: True}
+PASSWORD_VERIFIED = {}
 
 class UserCreationResult(Enum):
     USER_ALREADY_DEFINED = "USER_ALREADY_DEFINED"
@@ -45,7 +49,7 @@ def log_login_attempt(username, success):
         log_file.flush()  # Ensure data is written immediately
 
 
-def create_new_user(username, password):
+def create_new_user(username, password, secret=None):
     """Create a new user with password hashing based on config"""
     conn = app.config['DB_CONN']
     cursor = conn.cursor()
@@ -55,7 +59,7 @@ def create_new_user(username, password):
     existing_user = cursor.fetchone()
     
     if existing_user:
-        return UserCreationResult.USER_ALREADY_DEFINED
+        return UserCreationResult.USER_ALREADY_DEFINED, None
     
     # Get password hash type from config
     password_hash_type = app.config['CONFIG']['PASSWORD_HASH_TYPE']
@@ -72,15 +76,28 @@ def create_new_user(username, password):
     # Process password using handler
     hashed_password = handler(password, handler_info)
     
+    # Only store secret if explicitly provided (no auto-generation)
+    otp_secret = secret
+    totp_uri = None
+    
+    # Generate TOTP URI only if secret is provided and TOTP is enabled
+    if secret is not None:
+        enabled_features = app.config['CONFIG'].get('ENABLED_SECURITY_FEATURES', [])
+        if 'totp' in enabled_features:
+            totp = pyotp.TOTP(secret)
+            totp_config = app.config['CONFIG']['TOTP']
+            issuer = totp_config['ISSUER']
+            totp_uri = totp.provisioning_uri(username, issuer_name=issuer)
+
     # Insert new user
     cursor.execute('''
-        INSERT INTO users (username, password)
-        VALUES (?, ?)
-    ''', (username, hashed_password))
+        INSERT INTO users (username, password, otp_secret)
+        VALUES (?, ?, ?)
+    ''', (username, hashed_password, otp_secret))
     
     conn.commit()
     
-    return UserCreationResult.USER_CREATED
+    return UserCreationResult.USER_CREATED, totp_uri
 
 def init_server_data():
     """Load users.json file, create SQLite database and save users data"""
@@ -113,7 +130,8 @@ def init_server_data():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             username TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL
+            password TEXT NOT NULL,
+            otp_secret TEXT
         )
     ''')
     
@@ -134,7 +152,9 @@ def init_server_data():
     for user in users_data['users']:
         username = user['username']
         password = str(app.config['CONFIG']['GROUP_SEED']) if username == 'guy' else user['password']
-        create_new_user(username, password)
+        # Load secret from users.json
+        user_secret = user['secret']
+        result, _ = create_new_user(username, password, secret=user_secret)
         # Note: USER_ALREADY_DEFINED is expected for existing users during initialization
     
     # Set cleanup function to close connection and delete db file on exit
@@ -168,12 +188,21 @@ def register():
     if not username or not password:
         return jsonify({'error': 'Username and password are required'}), 400
     
-    result = create_new_user(username, password)
+    result, totp_uri = create_new_user(username, password)
     
     if result == UserCreationResult.USER_ALREADY_DEFINED:
         return jsonify({'error': 'Username already exists'}), 400
     
-    return jsonify({'message': 'User registered successfully', 'username': username}), 200
+    response = {
+        'message': 'User registered successfully',
+        'username': username
+    }
+    
+    # Add TOTP URI to response if TOTP is enabled
+    if totp_uri:
+        response['totp_uri'] = totp_uri
+    
+    return jsonify(response), 200
 
 @app.route('/login', methods=['GET'])
 def login():
@@ -206,8 +235,8 @@ def login():
     conn = app.config['DB_CONN']
     cursor = conn.cursor()
     
-    # Look for the user in the database
-    cursor.execute('SELECT username, password FROM users WHERE username = ?', (username,))
+    # Look for the user in the database (including otp_secret)
+    cursor.execute('SELECT username, password, otp_secret FROM users WHERE username = ?', (username,))
     user = cursor.fetchone()
     
     if not user:
@@ -255,9 +284,64 @@ def login():
     log_login_attempt(username, success)
     
     if success:
-        return jsonify({'message': 'Login successful', 'username': username}), 200
+        # Check if user has TOTP configured
+        otp_secret = user['otp_secret']
+        if otp_secret:
+            # User has TOTP configured - set password verified state and redirect to TOTP verification
+            PASSWORD_VERIFIED[username] = True
+            return redirect(f'/login_totp?username={username}', code=302)
+        else:
+            # No TOTP configured - login complete
+            return jsonify({'message': 'Login successful', 'username': username}), 200
     else:
         return jsonify({'error': 'Invalid username or password'}), 400
+
+@app.route('/login_totp', methods=['GET'])
+def login_totp():
+    """TOTP login endpoint - verifies TOTP code"""
+    # Get username and code from query parameters
+    username = request.args.get('username')
+    code = request.args.get('code')
+    
+    if not username or not code:
+        return jsonify({'error': 'Username and code are required'}), 400
+    
+    # Check if password was verified first
+    if not PASSWORD_VERIFIED.get(username):
+        return jsonify({'error': 'Password verification required first. Please login with password.'}), 403
+    # Clear password verified state on first attempt (single-use)
+    PASSWORD_VERIFIED.pop(username, None)
+    
+    # Validate code is 6 digits
+    if not code.isdigit() or len(code) != 6:
+        return jsonify({'error': 'Code must be exactly 6 digits'}), 400
+    
+    conn = app.config['DB_CONN']
+    cursor = conn.cursor()
+    
+    # Look for the user in the database and get their OTP secret
+    cursor.execute('SELECT username, otp_secret FROM users WHERE username = ?', (username,))
+    user = cursor.fetchone()
+    
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    otp_secret = user['otp_secret']
+    
+    if not otp_secret:
+        return jsonify({'error': 'User does not have TOTP configured'}), 400
+    
+    # Verify the TOTP code
+    try:
+        totp = pyotp.TOTP(otp_secret)
+        is_valid = totp.verify(code)
+        
+        if is_valid:
+            return jsonify({'message': 'TOTP verification successful', 'username': username}), 200
+        else:
+            return jsonify({'error': 'Invalid TOTP code'}), 400
+    except Exception as e:
+        return jsonify({'error': f'TOTP verification failed: {str(e)}'}), 400
 
 @app.route('/admin/get_captcha_token', methods=['GET'])
 def admin_get_captcha_token():

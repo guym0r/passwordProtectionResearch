@@ -2,124 +2,153 @@
   "users": [
     {
       "username": "james",
-      "password": "123456"
+      "password": "123456",
+      "secret": null
     },
     {
       "username": "monika",
-      "password": "987654"
+      "password": "987654",
+      "secret": null
     },
     {
       "username": "sarah",
-      "password": "456789"
+      "password": "456789",
+      "secret": null
     },
     {
       "username": "michael",
-      "password": "1234567"
+      "password": "1234567",
+      "secret": null
     },
     {
       "username": "emily",
-      "password": "7654321"
+      "password": "7654321",
+      "secret": null
     },
     {
       "username": "david",
-      "password": "12345678"
+      "password": "12345678",
+      "secret": null
     },
     {
       "username": "lisa",
-      "password": "87654321"
+      "password": "87654321",
+      "secret": null
     },
     {
       "username": "robert",
-      "password": "112233"
+      "password": "112233",
+      "secret": "2KTL2Z74Z3SZH3WA7PG5LQKBQCORX7UI"
     },
     {
       "username": "jennifer",
-      "password": "998877"
+      "password": "998877",
+      "secret": "5A3WPR5PYEVDYS3PGNKRTXAMW2SXHDJV"
     },
     {
       "username": "william",
-      "password": "555666"
+      "password": "555666",
+      "secret": "EBXLMRJAE2HMLRRMF7M37XJWHLHQMYBK"
     },
     {
       "username": "jessica",
-      "password": "password1"
+      "password": "password1",
+      "secret": null
     },
     {
       "username": "richard",
-      "password": "welcome9"
+      "password": "welcome9",
+      "secret": null
     },
     {
       "username": "amanda",
-      "password": "hello123"
+      "password": "hello123",
+      "secret": null
     },
     {
       "username": "joseph",
-      "password": "computer5"
+      "password": "computer5",
+      "secret": null
     },
     {
       "username": "michelle",
-      "password": "summer88"
+      "password": "summer88",
+      "secret": null
     },
     {
       "username": "thomas",
-      "password": "winter99"
+      "password": "winter99",
+      "secret": null
     },
     {
       "username": "kimberly",
-      "password": "spring77"
+      "password": "spring77",
+      "secret": null
     },
     {
       "username": "christopher",
-      "password": "autumn66"
+      "password": "autumn66",
+      "secret": "SKEMPHC2OGUBZM5BMZDIDYVTVDSRFXSU"
     },
     {
       "username": "deborah",
-      "password": "morning2"
+      "password": "morning2",
+      "secret": "57FREBBSPZKXAJI5TMM5Z3HNOOYPIBSZ"
     },
     {
       "username": "daniel",
-      "password": "evening4"
+      "password": "evening4",
+      "secret": "BNHRHVQQYUMAH5N4EBIGILXDZPBGER4W"
     },
     {
       "username": "patricia",
-      "password": "k7#XmP9qW@2n"
+      "password": "k7#XmP9qW@2n",
+      "secret": null
     },
     {
       "username": "matthew",
-      "password": "F$3hL8jK#pQr"
+      "password": "F$3hL8jK#pQr",
+      "secret": null
     },
     {
       "username": "linda",
-      "password": "T9@vN2mX$wL4"
+      "password": "T9@vN2mX$wL4",
+      "secret": null
     },
     {
       "username": "anthony",
-      "password": "Q5#bR7kM@pY3"
+      "password": "Q5#bR7kM@pY3",
+      "secret": null
     },
     {
       "username": "barbara",
-      "password": "H$2nJ8fD#xK6"
+      "password": "H$2nJ8fD#xK6",
+      "secret": null
     },
     {
       "username": "mark",
-      "password": "W4@tL9qR$mP1"
+      "password": "W4@tL9qR$mP1",
+      "secret": null
     },
     {
       "username": "elizabeth",
-      "password": "N7#vK3hX@bF5"
+      "password": "N7#vK3hX@bF5",
+      "secret": null
     },
     {
       "username": "donald",
-      "password": "M$6jP2wT#qL8"
+      "password": "M$6jP2wT#qL8",
+      "secret": "BM4J2DXJRH223R35RWMHSWORNGH3HHBK"
     },
     {
       "username": "maria",
-      "password": "K9@rH4nY$fD7"
+      "password": "K9@rH4nY$fD7",
+      "secret": "6N3LLGUVFFYI5BYAVLCS4PT66F3AREPN"
     },
     {
       "username": "guy",
-      "password": "206360893"
+      "password": "206360893",
+      "secret": "5UKPZ66ODDD5H7R2D6PUROXAOULFCLBR"
     }
   ]
 }
-
