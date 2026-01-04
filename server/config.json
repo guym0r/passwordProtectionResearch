@@ -29,5 +29,8 @@
   },
   "TOTP": {
     "ISSUER": "web-auth"
+  },
+  "ACCOUNT_LOCKOUT": {
+    "THRESHOLD": 5
   }
 }

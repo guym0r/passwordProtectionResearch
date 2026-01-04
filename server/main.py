@@ -8,6 +8,7 @@ from datetime import datetime
 from password_handlers import PASSWORD_HANDLERS
 from security_hooks import run_pre_login_hooks, run_post_login_hooks, init_security_hooks
 from captcha_hook import get_captcha_token
+from account_lockout_hook import reset_account_lockout
 import pyotp
 
 app = Flask(__name__)
@@ -364,6 +365,25 @@ def admin_get_captcha_token():
         return jsonify({'error': 'No captcha token found for this username'}), 404
     
     return jsonify({'username': username, 'captcha_token': captcha_token}), 200
+
+@app.route('/admin/unlock_user', methods=['GET'])
+def admin_unlock_user():
+    """Admin endpoint to unlock a user account"""
+    # Get group_seed and username from query parameters
+    group_seed = request.args.get('group_seed')
+    username = request.args.get('username')
+    
+    if not group_seed or not username:
+        return jsonify({'error': 'group_seed and username are required'}), 400
+    
+    # Verify group_seed matches config
+    if group_seed != app.config['CONFIG']['GROUP_SEED']:
+        return jsonify({'error': 'Invalid group_seed'}), 403
+    
+    # Reset account lockout for the user
+    reset_account_lockout(username)
+    
+    return jsonify({'message': 'User account unlocked successfully', 'username': username}), 200
 
 def main():
     init_server_data()

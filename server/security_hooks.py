@@ -1,11 +1,13 @@
 # Security hooks system for login endpoint
 from rate_limit_hook import rate_limit_feature
 from captcha_hook import captcha_feature
+from account_lockout_hook import account_lockout_feature
 
 # Global hardcoded list of all available security features
 ALL_SECURITY_FEATURES = {
     'rate_limit': rate_limit_feature,
-    'captcha': captcha_feature
+    'captcha': captcha_feature,
+    'account_lockout': account_lockout_feature
 }
 
 # List of enabled security hooks (populated by init_security_hooks)
