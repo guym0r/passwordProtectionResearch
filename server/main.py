@@ -185,11 +185,13 @@ def register():
     
     username = data.get('username')
     password = data.get('password')
+    totp_secret = data.get('totp_secret')  # Optional TOTP secret
     
     if not username or not password:
         return jsonify({'error': 'Username and password are required'}), 400
     
-    result, totp_uri = create_new_user(username, password)
+    # Pass totp_secret only if provided
+    result, totp_uri = create_new_user(username, password, secret=totp_secret)
     
     if result == UserCreationResult.USER_ALREADY_DEFINED:
         return jsonify({'error': 'Username already exists'}), 400
