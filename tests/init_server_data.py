@@ -28,9 +28,6 @@ def init_server_data():
         if status_code == 200:
             print(f"Registered user: {username}")
             otp_uri = response.get('totp_uri', None)
-            if otp_uri:
-                print(f"  TOTP URI: {otp_uri}")
-            # Store in result dictionary
             result[username] = (password, otp_uri)
         else:
             print(f"Failed to register user: {username} - {response.get('error', 'Unknown error')}")

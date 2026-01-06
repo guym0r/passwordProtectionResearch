@@ -45,13 +45,14 @@ def main():
     
     # Initialize test data (register users)
     print("Initializing test data...")
-    init_server_data.init_server_data()
+    users_data = init_server_data.init_server_data()
     
     # Run bruteforce test
     print("Starting bruteforce test...")
-    username = 'monika'
+    username = 'robert'
     max_tries = 10000
-    result = bruteforce.start_test(username, max_tries)
+    otp_uri = users_data[username][1]  # otp_uri is the second element
+    result = bruteforce.start_test(username, max_tries, otp_uri=otp_uri)
     
     if result:
         print(f"Test completed successfully. Password found: {result}")

@@ -240,10 +240,6 @@ def login():
     # Get password hash type from config
     password_hash_type = app.config['CONFIG']['PASSWORD_HASH_TYPE']
     
-    # Get handler tuple from dictionary
-    if password_hash_type not in PASSWORD_HANDLERS:
-        raise RuntimeError(f'Unknown password hash type: {password_hash_type}')
-    
     prepare_handler, handler = PASSWORD_HANDLERS[password_hash_type]
     
     # Get stored password
