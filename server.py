@@ -97,12 +97,10 @@ def create_new_user(username, password, secret=None):
     
     # Generate TOTP URI only if secret is provided and TOTP is enabled
     if secret is not None:
-        enabled_features = app.config['CONFIG'].get('ENABLED_SECURITY_FEATURES', [])
-        if 'totp' in enabled_features:
-            totp = pyotp.TOTP(secret)
-            totp_config = app.config['CONFIG']['TOTP']
-            issuer = totp_config['ISSUER']
-            totp_uri = totp.provisioning_uri(username, issuer_name=issuer)
+        totp = pyotp.TOTP(secret)
+        totp_config = app.config['CONFIG']['TOTP']
+        issuer = totp_config['ISSUER']
+        totp_uri = totp.provisioning_uri(username, issuer_name=issuer)
 
     # Insert new user
     cursor.execute('''
@@ -182,7 +180,7 @@ def register():
     
     # Pass totp_secret only if provided
     result, totp_uri = create_new_user(username, password, secret=totp_secret)
-    
+
     if result == UserCreationResult.USER_ALREADY_DEFINED:
         return jsonify({'error': 'Username already exists'}), 400
     

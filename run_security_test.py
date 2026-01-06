@@ -51,7 +51,7 @@ def main():
     print("Starting bruteforce test...")
     username = 'robert'
     max_tries = 10000
-    otp_uri = users_data[username][1]  # otp_uri is the second element
+    otp_uri = users_data[username][1]
     result = bruteforce.start_test(username, max_tries, otp_uri=otp_uri)
     
     if result:

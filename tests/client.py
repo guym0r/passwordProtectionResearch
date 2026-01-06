@@ -34,7 +34,7 @@ def login(username, password, captcha_token=None):
     # Check if redirect to TOTP endpoint
     if response.status_code == 302:
         redirect_url = response.headers.get('Location', '')
-        return response.json() if response.content else {}, response.status_code, redirect_url
+        return {}, response.status_code, redirect_url
     
     return response.json(), response.status_code, None
 
