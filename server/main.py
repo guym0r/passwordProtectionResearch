@@ -3,10 +3,11 @@ import json
 import os
 import sqlite3
 import atexit
+import argparse
 from enum import Enum
 from datetime import datetime
 from password_handlers import PASSWORD_HANDLERS
-from security_hooks import run_pre_login_hooks, run_post_login_hooks, init_security_hooks
+from security_hooks import run_pre_login_hooks, run_post_login_hooks, init_security_hooks, enabled_security_hooks
 from captcha_hook import get_captcha_token
 from account_lockout_hook import reset_account_lockout
 import pyotp
@@ -35,12 +36,16 @@ def log_login_attempt(username, success):
     group_seed = app.config['CONFIG']['GROUP_SEED']
     hashmode = app.config['CONFIG']['PASSWORD_HASH_TYPE']
     
+    # Get list of enabled security hooks
+    security_hooks_list = list(enabled_security_hooks.keys())
+    
     log_entry = {
         'timestamp': timestamp,
         'group_seed': group_seed,
         'username': username,
         'login_result': success,
-        'hashmode': hashmode
+        'hashmode': hashmode,
+        'security_features': security_hooks_list
     }
     
     # Write to the open log file as JSON (one line per entry)
@@ -100,10 +105,8 @@ def create_new_user(username, password, secret=None):
     
     return UserCreationResult.USER_CREATED, totp_uri
 
-def init_server_data():
-    """Load users.json file, create SQLite database and save users data"""
-    # Load config.json file
-    config_file_path = os.path.join(os.path.dirname(__file__), 'config.json')
+def init_server_data(config_file_path):
+    """Initialize server: load config, initialize security hooks, create database and log file"""
     if not os.path.exists(config_file_path):
         raise RuntimeError(f"Config file not found: {config_file_path}")
     
@@ -115,11 +118,6 @@ def init_server_data():
     
     # Initialize security hooks
     init_security_hooks(config_data)
-    
-    # Load users.json file
-    users_file_path = os.path.join(os.path.dirname(__file__), 'users.json')
-    with open(users_file_path, 'r') as f:
-        users_data = json.load(f)
     
     # Create SQLite database and keep connection open
     db_path = os.path.join(os.path.dirname(__file__), 'users.db')
@@ -148,15 +146,6 @@ def init_server_data():
     
     # Register cleanup function to close log file on exit
     atexit.register(close_log_file)
-    
-    # Insert users data into database using create_new_user
-    for user in users_data['users']:
-        username = user['username']
-        password = str(app.config['CONFIG']['GROUP_SEED']) if username == 'guy' else user['password']
-        # Load secret from users.json
-        user_secret = user['secret']
-        result, _ = create_new_user(username, password, secret=user_secret)
-        # Note: USER_ALREADY_DEFINED is expected for existing users during initialization
     
     # Set cleanup function to close connection and delete db file on exit
     atexit.register(lambda: close_db(conn, db_path))
@@ -392,7 +381,17 @@ def admin_unlock_user():
     return jsonify({'message': 'User account unlocked successfully', 'username': username}), 200
 
 def main():
-    init_server_data()
+    parser = argparse.ArgumentParser(description='Password Protection Server')
+    parser.add_argument('--config', '-c', type=str, default='config.json', help='Path to config file (default: config.json in server directory)')
+    args = parser.parse_args()
+    
+    # Resolve config file path relative to server directory if not absolute
+    if not os.path.isabs(args.config):
+        config_file_path = os.path.join(os.path.dirname(__file__), args.config)
+    else:
+        config_file_path = args.config
+    
+    init_server_data(config_file_path=config_file_path)
     app.run(host='0.0.0.0', port=8000)
     
 if __name__ == '__main__':
