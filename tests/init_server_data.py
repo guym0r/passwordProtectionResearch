@@ -1,6 +1,6 @@
 import json
 import os
-from client import register
+from .client import register
 
 
 def init_server_data():

@@ -6,11 +6,16 @@ import atexit
 import argparse
 from enum import Enum
 from datetime import datetime
-from password_handlers import PASSWORD_HANDLERS
-from security_hooks import run_pre_login_hooks, run_post_login_hooks, init_security_hooks, enabled_security_hooks
-from captcha_hook import get_captcha_token
-from account_lockout_hook import reset_account_lockout
+from server_utils.password_handlers import PASSWORD_HANDLERS
+from server_utils.security_hooks import run_pre_login_hooks, run_post_login_hooks, init_security_hooks, enabled_security_hooks
+from server_utils.captcha_hook import get_captcha_token
+from server_utils.account_lockout_hook import reset_account_lockout
+
 import pyotp
+
+# Constants for database and log file paths
+DB_FILE = "users.db"
+LOG_FILE = "attempts.log"
 
 app = Flask(__name__)
 
@@ -21,14 +26,21 @@ class UserCreationResult(Enum):
     USER_ALREADY_DEFINED = "USER_ALREADY_DEFINED"
     USER_CREATED = "USER_CREATED"
 
-def close_db(conn, db_path):
-    conn.close()
-    if os.path.exists(db_path):
-        os.remove(db_path)
-
-def close_log_file():
+def cleanup_server():
+    """Cleanup function to close database connection, log file, and remove database file"""
+    # Close log file
     if 'LOG_FILE' in app.config:
         app.config['LOG_FILE'].close()
+    
+    # Close database connection and remove database file
+    if 'DB_CONN' in app.config:
+        conn = app.config['DB_CONN']
+        conn.close()
+    
+    if 'DB_PATH' in app.config:
+        db_path = app.config['DB_PATH']
+        if os.path.exists(db_path):
+            os.remove(db_path)
 
 def log_login_attempt(username, success):
     """Log login attempt to attempts.log file in JSON format"""
@@ -48,11 +60,8 @@ def log_login_attempt(username, success):
         'security_features': security_hooks_list
     }
     
-    # Write to the open log file as JSON (one line per entry)
-    log_file = app.config.get('LOG_FILE')
-    if log_file:
-        log_file.write(json.dumps(log_entry) + '\n')
-        log_file.flush()  # Ensure data is written immediately
+    app.config['LOG_FILE'].write(json.dumps(log_entry) + '\n')
+    app.config['LOG_FILE'].flush()
 
 
 def create_new_user(username, password, secret=None):
@@ -120,8 +129,7 @@ def init_server_data(config_file_path):
     init_security_hooks(config_data)
     
     # Create SQLite database and keep connection open
-    db_path = os.path.join(os.path.dirname(__file__), 'users.db')
-    conn = sqlite3.connect(db_path, check_same_thread=False)
+    conn = sqlite3.connect(DB_FILE, check_same_thread=False)
     conn.row_factory = sqlite3.Row  # This allows column access by name
     cursor = conn.cursor()
     
@@ -137,22 +145,15 @@ def init_server_data(config_file_path):
     # Store database connection and path in app config (keep it open for server lifetime)
     # This must be done before calling create_new_user
     app.config['DB_CONN'] = conn
-    app.config['DB_PATH'] = db_path
+    app.config['DB_PATH'] = DB_FILE
     
     # Open attempts.log file and keep it open
-    log_file_path = os.path.join(os.path.dirname(__file__), 'attempts.log')
-    log_file = open(log_file_path, 'a')
+    log_file = open(LOG_FILE, 'a')
     app.config['LOG_FILE'] = log_file
-    
-    # Register cleanup function to close log file on exit
-    atexit.register(close_log_file)
-    
-    # Set cleanup function to close connection and delete db file on exit
-    atexit.register(lambda: close_db(conn, db_path))
 
 @app.route('/get_users', methods=['GET'])
 def get_users():
-    """Endpoint that returns the users as JSON from database"""
+    """Endpoint that returns the users as JSON from database, meant for debugging purposes"""
     conn = app.config['DB_CONN']
     cursor = conn.cursor()
     
@@ -380,20 +381,13 @@ def admin_unlock_user():
     
     return jsonify({'message': 'User account unlocked successfully', 'username': username}), 200
 
-def main():
-    parser = argparse.ArgumentParser(description='Password Protection Server')
-    parser.add_argument('--config', '-c', type=str, default='config.json', help='Path to config file (default: config.json in server directory)')
-    args = parser.parse_args()
-    
-    # Resolve config file path relative to server directory if not absolute
-    if not os.path.isabs(args.config):
-        config_file_path = os.path.join(os.path.dirname(__file__), args.config)
-    else:
-        config_file_path = args.config
-    
-    init_server_data(config_file_path=config_file_path)
+
+def start_server(config_file_path='server_config.json'):
+    init_server_data(config_file_path)
     app.run(host='0.0.0.0', port=8000)
     
 if __name__ == '__main__':
-    main()
+    # Register cleanup function when running directly
+    atexit.register(cleanup_server)
+    start_server()
 

@@ -1,8 +1,8 @@
 # Security hooks system for login endpoint
-from rate_limit_hook import rate_limit_feature
-from captcha_hook import captcha_feature
-from account_lockout_hook import account_lockout_feature
-from totp_hook import totp_feature
+from .rate_limit_hook import rate_limit_feature
+from .captcha_hook import captcha_feature
+from .account_lockout_hook import account_lockout_feature
+from .totp_hook import totp_feature
 
 # Global hardcoded list of all available security features
 ALL_SECURITY_FEATURES = {

@@ -1,11 +1,9 @@
 import os
-from client import login
-from init_server_data import init_server_data
+from .client import login
+from .init_server_data import init_server_data
 
 
 def start_test(username, max_tries):
-    init_server_data()
-    
     # Get the directory where this script is located
     script_dir = os.path.dirname(os.path.abspath(__file__))
     rockyou_file_path = os.path.join(script_dir, 'rockyou.txt')
@@ -51,6 +49,4 @@ def start_test(username, max_tries):
     return None
 
 if __name__ == '__main__':
-    username = 'monika'
-    max_tries = 10000
-    start_test(username, max_tries)
+    start_test("monika", 10000)
