@@ -50,6 +50,13 @@ def start_test(username, max_tries, otp_uri=None, progress_counter=0):
                     time.sleep(retry_after + 1)
                 continue
             
+            # Check if account is locked
+            if status_code == 403 and isinstance(response, dict):
+                error_msg = response.get('error', '')
+                if 'Account is locked' in error_msg:
+                    print(f"Account is locked after {attempt_count} attempts, returning as failed to find password")
+                    return None, total_sleep_time
+            
             # Check if captcha is required
             if status_code == 403 and response.get('captcha_required'):
                 time.sleep(CAPTCHA_SLEEP_TIME)

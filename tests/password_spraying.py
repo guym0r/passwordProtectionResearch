@@ -25,11 +25,17 @@ def start_test(users_dict, max_attempts, progress_counter=0):
                 passwords.append(password)
     
     results = {}
+    locked_users = set()
     password_attempt_count = 0
     total_sleep_time = 0
     
     # Try each password against all users
     for password in passwords:
+        # Check if all users are locked
+        if len(locked_users) == len(users_dict):
+            print("All users are locked, stopping password spraying test")
+            return results, total_sleep_time
+        
         # Try this password against each user
         if progress_counter > 0 and password_attempt_count % progress_counter == 0:
             print(f"Attempt {password_attempt_count}")
@@ -38,6 +44,10 @@ def start_test(users_dict, max_attempts, progress_counter=0):
         for username, otp_uri in users_dict.items():
             # Skip users we've already found passwords for
             if username in results:
+                continue
+            
+            # Skip locked users
+            if username in locked_users:
                 continue
             # Try to login with this password
             try:
@@ -49,6 +59,15 @@ def start_test(users_dict, max_attempts, progress_counter=0):
                     if retry_after > 0:
                         print(f"Rate limit exceeded, continuing to next attempt...")
                     continue
+                
+                # Check if account is locked
+                if status_code == 403 and isinstance(response, dict):
+                    error_msg = response.get('error', '')
+                    if 'Account is locked' in error_msg:
+                        print(f"Account {username} is locked, adding to locked users list")
+                        locked_users.add(username)
+                        # Skip this user - don't add to results (failed to find password)
+                        continue
                 
                 # Check if captcha is required
                 if status_code == 403 and response.get('captcha_required'):
