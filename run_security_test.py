@@ -24,6 +24,7 @@ def wait_for_server(max_wait=30):
     return False
 
 def run_hash_to_time_test(users_data):
+    print("=" * 50)
     print("Starting hash to time test...")
     username = 'maria'
     max_tries = 10000
@@ -33,8 +34,10 @@ def run_hash_to_time_test(users_data):
     end_time = time.time()
     duration = end_time - start_time - sleep_time
     print(f"Hash to time test completed in {duration} seconds")
+    print("=" * 50)
 
 def run_bruteforce_test(users_data):
+    print("=" * 50)
     print("Starting bruteforce test...")
     username = 'robert'
     max_tries = 50000
@@ -47,8 +50,10 @@ def run_bruteforce_test(users_data):
     else:
         print(f"Test completed. Password not found within {max_tries} attempts.")
         print(f"Total sleep time: {sleep_time} seconds")
+    print("=" * 50)
 
 def run_password_spraying_test(users_data):
+    print("=" * 50)
     print("Starting password spraying test...")
     max_tries = 50000
     users_dict = {username: otp_uri for username, (password, otp_uri) in users_data.items()}
@@ -58,6 +63,7 @@ def run_password_spraying_test(users_data):
         print(f"Found passwords for {len(result)} user(s):")
         for username, password in result.items():
             print(f"{username}: {password}")
+    print("=" * 50)
 
 def main():
     print("Starting security tests...")
