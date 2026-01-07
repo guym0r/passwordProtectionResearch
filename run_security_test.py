@@ -35,25 +35,9 @@ def run_hash_to_time_test(users_data):
     print(f"Hash to time test completed in {duration} seconds")
     print("=" * 50)
 
-def run_bruteforce_test(users_data, max_tries=50000):
-    print("=" * 50)
-    print("Starting bruteforce test...")
-    password_type_counts = {}
-    for username in users_data.keys():
-        otp_uri = users_data[username][1]
-        password_type = users_data[username][2]
-        start_time = time.time()
-        result, sleep_time = bruteforce.start_test(username, max_tries, otp_uri=otp_uri, progress_counter=1000)
-        
-        end_time = time.time()
-        duration = end_time - start_time - sleep_time
-        if password_type not in password_type_counts:
-            password_type_counts[password_type] = []
-        password_type_counts[password_type].append((duration, result))
-        print(f"{username}: {password_type} password type: {duration} seconds")
-
+def print_bruteforce_test_summary(password_type_counts):
     print("bruteforce test summary:")
-    for password_type in password_type_counts.keys():   
+    for password_type in password_type_counts.keys():
         total_successful_duration = 0
         total_failed_duration = 0
         successful_attempts = 0
@@ -73,7 +57,25 @@ def run_bruteforce_test(users_data, max_tries=50000):
             print(f"{password_type} password type: Successful attempts: {successful_attempts}, Failed attempts: {failed_attempts}, average failed duration: {total_failed_duration / failed_attempts:.2f} seconds")
         else:
             print(f"{password_type} password type: No attempts recorded")
-    
+
+def run_bruteforce_test(users_data, max_tries=50000):
+    print("=" * 50)
+    print("Starting bruteforce test...")
+    password_type_counts = {}
+    for username in users_data.keys():
+        otp_uri = users_data[username][1]
+        password_type = users_data[username][2]
+        start_time = time.time()
+        result, sleep_time = bruteforce.start_test(username, max_tries, otp_uri=otp_uri, progress_counter=1000)
+        
+        end_time = time.time()
+        duration = end_time - start_time - sleep_time
+        if password_type not in password_type_counts:
+            password_type_counts[password_type] = []
+        password_type_counts[password_type].append((duration, result))
+        print(f"{username}: {password_type} password type: {duration} seconds, result: {result}")
+
+    print_bruteforce_test_summary(password_type_counts)
     print("=" * 50)
 
 def run_password_spraying_test(users_data):
