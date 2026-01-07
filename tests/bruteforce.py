@@ -8,7 +8,7 @@ from .client import login, login_totp, admin_get_captcha_token
 GROUP_SEED = "206360893"
 CAPTCHA_SLEEP_TIME = 2
 
-def start_test(username, max_tries, otp_uri=None):
+def start_test(username, max_tries, otp_uri=None, progress_counter=0):
     # Get the directory where this script is located
     script_dir = os.path.dirname(os.path.abspath(__file__))
     rockyou_file_path = os.path.join(script_dir, 'rockyou.txt')
@@ -93,6 +93,10 @@ def start_test(username, max_tries, otp_uri=None):
                 else:
                     # Redirect to something other than TOTP - treat as failed password guess
                     continue
+
+            if progress_counter > 0 and attempt_count % progress_counter == 0:
+                print(f"Attempt {attempt_count} of {max_tries}")
+                
     return None, total_sleep_time
 
 if __name__ == '__main__':

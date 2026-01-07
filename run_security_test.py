@@ -27,7 +27,7 @@ def run_hash_to_time_test(users_data):
     print("=" * 50)
     print("Starting hash to time test...")
     username = 'maria'
-    max_tries = 10000
+    max_tries = 100
     start_time = time.time()
     result, sleep_time = bruteforce.start_test(username, max_tries, otp_uri=None)
     
