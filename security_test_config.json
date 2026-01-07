@@ -1,8 +1,8 @@
 {
   "AVAILABLE_SECURITY_FEATURES": ["rate_limit", "captcha", "account_lockout", "totp"],
-  "ENABLED_SECURITY_FEATURES": ["captcha"],
+  "ENABLED_SECURITY_FEATURES": [],
   "AVAILABLE_TEST_TYPES": ["bruteforce", "password_spraying", "hash_to_time"],
-  "TEST_TYPE": "bruteforce",
+  "TEST_TYPE": "password_spraying",
   "BRUTEFORCE_MAX_ATTEMPTS": 50000,
   "MAX_PASSWORD_SPRAYING": 20,
   "CAPTCHA_SIMULATE_SLEEP_TIME": 2
