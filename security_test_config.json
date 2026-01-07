@@ -1,6 +1,6 @@
 {
   "AVAILABLE_SECURITY_FEATURES": ["rate_limit", "captcha", "account_lockout", "totp"],
-  "ENABLED_SECURITY_FEATURES": [],
+  "ENABLED_SECURITY_FEATURES": ["rate_limit"],
   "AVAILABLE_TEST_TYPES": ["bruteforce", "password_spraying", "hash_to_time"],
   "TEST_TYPE": "password_spraying",
   "BRUTEFORCE_MAX_ATTEMPTS": 50000,
