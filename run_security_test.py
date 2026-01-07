@@ -25,26 +25,28 @@ def wait_for_server(max_wait=30):
 
 def run_hash_to_time_test(users_data):
     print("Starting hash to time test...")
-    username = 'robert'
-    max_tries = 50000
-    otp_uri = users_data[username][1]
-    result = hash_to_time.start_test(username, max_tries, otp_uri=otp_uri)
-    if result:
-        print(f"Test completed successfully. Password found: {result}")
-    else:
-        print(f"Test completed. Password not found within {max_tries} attempts.")
+    username = 'maria'
+    max_tries = 10000
+    start_time = time.time()
+    result, sleep_time = bruteforce.start_test(username, max_tries, otp_uri=None)
+    
+    end_time = time.time()
+    duration = end_time - start_time - sleep_time
+    print(f"Hash to time test completed in {duration} seconds")
 
 def run_bruteforce_test(users_data):
     print("Starting bruteforce test...")
     username = 'robert'
     max_tries = 50000
     otp_uri = users_data[username][1]
-    result = bruteforce.start_test(username, max_tries, otp_uri=otp_uri)
+    result, sleep_time = bruteforce.start_test(username, max_tries, otp_uri=otp_uri)
     
     if result:
         print(f"Test completed successfully. Password found: {result}")
+        print(f"Total sleep time: {sleep_time} seconds")
     else:
         print(f"Test completed. Password not found within {max_tries} attempts.")
+        print(f"Total sleep time: {sleep_time} seconds")
 
 def run_password_spraying_test(users_data):
     print("Starting password spraying test...")
@@ -55,7 +57,7 @@ def run_password_spraying_test(users_data):
         print(f"Password spraying test completed successfully!")
         print(f"Found passwords for {len(result)} user(s):")
         for username, password in result.items():
-            print(f"  {username}: {password}")
+            print(f"{username}: {password}")
 
 def main():
     print("Starting security tests...")
@@ -76,9 +78,10 @@ def main():
     print("Initializing test data...")
     users_data = init_server_data.init_server_data()
 
-    run_bruteforce_test(users_data)
+    # run_bruteforce_test(users_data)
 
-    run_password_spraying_test(users_data)
+    # run_password_spraying_test(users_data)
+    run_hash_to_time_test(users_data)
 
     # Cleanup server resources
     print("Cleaning up server resources...")
