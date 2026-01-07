@@ -19,6 +19,7 @@ To run the experiment, execute `python3 run_security_test.py`. It will:
 4. Run the experiment automatically
 5. Print the results when finished
 
+**Note:** If you see `"Got connection error in attempt X, waiting a second and continuing..."`, don't worry - this occurs when the server has too many open connections and should resolve automatically within a maximum of 30 seconds.
 ## The Server
 
 ### Start Server
@@ -175,4 +176,9 @@ The test suite provides detailed output including:
 - `BRUTEFORCE_MAX_ATTEMPTS`: Maximum password attempts for bruteforce test
 - `MAX_PASSWORD_SPRAYING`: Maximum passwords to try in password spraying test
 - `CAPTCHA_SIMULATE_SLEEP_TIME`: Sleep time (seconds) when CAPTCHA is encountered
+
+### Troubleshooting
+
+**Connection Error:**
+If you see `"Got connection error in attempt X, waiting a second and continuing"`, it's because the server has too many open connections/ports. This should resolve automatically within a maximum of 30 seconds as the server cleans up connections.
 
