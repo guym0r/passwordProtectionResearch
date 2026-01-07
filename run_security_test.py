@@ -22,6 +22,22 @@ def wait_for_server(max_wait=30):
         time.sleep(1)
     return False
 
+def filter_users_with_otp(users_data):
+    """
+    Filter out users without otp_uri from users_data.
+    
+    Args:
+        users_data: Dictionary mapping username -> (password, otp_uri, password_type)
+    
+    Returns:
+        Filtered dictionary containing only users with otp_uri
+    """
+    filtered_data = {}
+    for username, (password, otp_uri, password_type) in users_data.items():
+        if otp_uri is not None and otp_uri != '':
+            filtered_data[username] = (password, otp_uri, password_type)
+    return filtered_data
+
 def run_hash_to_time_test(users_data):
     print("=" * 50)
     print("Starting hash to time test...")
@@ -60,7 +76,10 @@ def print_bruteforce_test_summary(password_type_counts):
 
 def run_bruteforce_test(users_data, max_attempts=50000):
     print("=" * 50)
+    # uncomment to run tests only on users with TOTP enabled
+    users_data = filter_users_with_otp(users_data)
     print("Starting bruteforce test...")
+    
     password_type_counts = {}
     for username in users_data.keys():
         otp_uri = users_data[username][1]
@@ -104,6 +123,9 @@ def print_password_spraying_test_summary(users_data, found_results):
 def run_password_spraying_test(users_data, max_attempts=20):
     print("=" * 50)
     users_data = init_server_data.add_random_users(users_data, 1000, 1000)
+
+    # uncomment to run tests only on users with TOTP enabled
+    users_data = filter_users_with_otp(users_data)
     
     print("Starting password spraying test...")
     users_dict = {username: otp_uri for username, (password, otp_uri, password_type) in users_data.items()}
@@ -129,11 +151,14 @@ def main():
     print("Initializing test data...")
     users_data = init_server_data.init_server_data()
 
+    # uncomment to run hash to time test
     # run_hash_to_time_test(users_data)
 
+    # uncomment to run bruteforce test
     # run_bruteforce_test(users_data)
-
-    run_password_spraying_test(users_data)
+    
+    # uncomment to run password spraying test
+    # run_password_spraying_test(users_data)
 
     # Cleanup server resources
     print("Cleaning up server resources...")
