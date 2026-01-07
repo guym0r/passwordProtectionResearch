@@ -3,152 +3,182 @@
     {
       "username": "james",
       "password": "123456",
-      "secret": null
+      "secret": null,
+      "password_type": "easy"
     },
     {
       "username": "monika",
       "password": "987654",
-      "secret": null
+      "secret": null,
+      "password_type": "easy"
     },
     {
       "username": "sarah",
       "password": "456789",
-      "secret": null
+      "secret": null,
+      "password_type": "easy"
     },
     {
       "username": "michael",
       "password": "1234567",
-      "secret": null
+      "secret": null,
+      "password_type": "easy"
     },
     {
       "username": "emily",
       "password": "7654321",
-      "secret": null
+      "secret": null,
+      "password_type": "easy"
     },
     {
       "username": "david",
       "password": "12345678",
-      "secret": null
+      "secret": null,
+      "password_type": "easy"
     },
     {
       "username": "lisa",
       "password": "87654321",
-      "secret": null
+      "secret": null,
+      "password_type": "easy"
     },
     {
       "username": "robert",
       "password": "112233",
-      "secret": "2KTL2Z74Z3SZH3WA7PG5LQKBQCORX7UI"
+      "secret": "2KTL2Z74Z3SZH3WA7PG5LQKBQCORX7UI",
+      "password_type": "easy"
     },
     {
       "username": "jennifer",
       "password": "998877",
-      "secret": "5A3WPR5PYEVDYS3PGNKRTXAMW2SXHDJV"
+      "secret": "5A3WPR5PYEVDYS3PGNKRTXAMW2SXHDJV",
+      "password_type": "easy"
     },
     {
       "username": "william",
       "password": "555666",
-      "secret": "EBXLMRJAE2HMLRRMF7M37XJWHLHQMYBK"
+      "secret": "EBXLMRJAE2HMLRRMF7M37XJWHLHQMYBK",
+      "password_type": "easy"
     },
     {
       "username": "jessica",
       "password": "password1",
-      "secret": null
+      "secret": null,
+      "password_type": "medium"
     },
     {
       "username": "richard",
       "password": "welcome9",
-      "secret": null
+      "secret": null,
+      "password_type": "medium"
     },
     {
       "username": "amanda",
       "password": "hello123",
-      "secret": null
+      "secret": null,
+      "password_type": "medium"
     },
     {
       "username": "joseph",
       "password": "computer5",
-      "secret": null
+      "secret": null,
+      "password_type": "medium"
     },
     {
       "username": "michelle",
       "password": "summer88",
-      "secret": null
+      "secret": null,
+      "password_type": "medium"
     },
     {
       "username": "thomas",
       "password": "Winter97",
-      "secret": null
+      "secret": null,
+      "password_type": "medium"
     },
     {
       "username": "kimberly",
       "password": "spring777",
-      "secret": null
+      "secret": null,
+      "password_type": "medium"
     },
     {
       "username": "christopher",
       "password": "autumn66",
-      "secret": "SKEMPHC2OGUBZM5BMZDIDYVTVDSRFXSU"
+      "secret": "SKEMPHC2OGUBZM5BMZDIDYVTVDSRFXSU",
+      "password_type": "medium"
     },
     {
       "username": "deborah",
       "password": "morning2",
-      "secret": "57FREBBSPZKXAJI5TMM5Z3HNOOYPIBSZ"
-    },
-    {
-      "username": "daniel",
-      "password": "evening4",
-      "secret": "BNHRHVQQYUMAH5N4EBIGILXDZPBGER4W"
-    },
-    {
-      "username": "patricia",
-      "password": "k7#XmP9qW@2n",
-      "secret": null
-    },
-    {
-      "username": "matthew",
-      "password": "F$3hL8jK#pQr",
-      "secret": null
-    },
-    {
-      "username": "linda",
-      "password": "T9@vN2mX$wL4",
-      "secret": null
-    },
-    {
-      "username": "anthony",
-      "password": "Q5#bR7kM@pY3",
-      "secret": null
-    },
-    {
-      "username": "barbara",
-      "password": "H$2nJ8fD#xK6",
-      "secret": null
-    },
-    {
-      "username": "mark",
-      "password": "W4@tL9qR$mP1",
-      "secret": null
-    },
-    {
-      "username": "elizabeth",
-      "password": "N7#vK3hX@bF5",
-      "secret": null
-    },
-    {
-      "username": "donald",
-      "password": "M$6jP2wT#qL8",
-      "secret": "BM4J2DXJRH223R35RWMHSWORNGH3HHBK"
-    },
-    {
-      "username": "maria",
-      "password": "K9@rH4nY$fD7",
-      "secret": "6N3LLGUVFFYI5BYAVLCS4PT66F3AREPN"
+      "secret": "57FREBBSPZKXAJI5TMM5Z3HNOOYPIBSZ",
+      "password_type": "medium"
     },
     {
       "username": "guy",
       "password": "206360893",
-      "secret": "5UKPZ66ODDD5H7R2D6PUROXAOULFCLBR"
+      "secret": "5UKPZ66ODDD5H7R2D6PUROXAOULFCLBR",
+      "password_type": "medium"
+    },
+    {
+      "username": "patricia",
+      "password": "k7#XmP9qW@2n",
+      "secret": null,
+      "password_type": "hard"
+    },
+    {
+      "username": "matthew",
+      "password": "F$3hL8jK#pQr",
+      "secret": null,
+      "password_type": "hard"
+    },
+    {
+      "username": "linda",
+      "password": "T9@vN2mX$wL4",
+      "secret": null,
+      "password_type": "hard"
+    },
+    {
+      "username": "anthony",
+      "password": "Q5#bR7kM@pY3",
+      "secret": null,
+      "password_type": "hard"
+    },
+    {
+      "username": "barbara",
+      "password": "H$2nJ8fD#xK6",
+      "secret": null,
+      "password_type": "hard"
+    },
+    {
+      "username": "mark",
+      "password": "W4@tL9qR$mP1",
+      "secret": null,
+      "password_type": "hard"
+    },
+    {
+      "username": "elizabeth",
+      "password": "N7#vK3hX@bF5",
+      "secret": null,
+      "password_type": "hard"
+    },
+    {
+      "username": "donald",
+      "password": "M$6jP2wT#qL8",
+      "secret": "BM4J2DXJRH223R35RWMHSWORNGH3HHBK",
+      "password_type": "hard"
+    },
+    {
+      "username": "maria",
+      "password": "K9@rH4nY$fD7",
+      "secret": "6N3LLGUVFFYI5BYAVLCS4PT66F3AREPN",
+      "password_type": "hard"
+    },
+    {
+      "username": "daniel",
+      "password": "K@n18JqkO*sM",
+      "secret": "BNHRHVQQYUMAH5N4EBIGILXDZPBGER4W",
+      "password_type": "hard"
     }
   ]
 }
