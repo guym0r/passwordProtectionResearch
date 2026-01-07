@@ -46,7 +46,8 @@ def start_test(username, max_tries, otp_uri=None, progress_counter=0):
                 retry_after = response.get('retry_after', 0)
                 if retry_after > 0:
                     print(f"Rate limit exceeded, waiting {retry_after} seconds...")
-                    time.sleep(retry_after)
+                    # + 1 second to be sure that the rate limit is not exceeded again
+                    time.sleep(retry_after + 1)
                 continue
             
             # Check if captcha is required
