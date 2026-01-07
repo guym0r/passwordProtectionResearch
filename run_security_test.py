@@ -42,14 +42,12 @@ def run_bruteforce_test(users_data):
     username = 'robert'
     max_tries = 50000
     otp_uri = users_data[username][1]
+    start_time = time.time()
     result, sleep_time = bruteforce.start_test(username, max_tries, otp_uri=otp_uri)
     
-    if result:
-        print(f"Test completed successfully. Password found: {result}")
-        print(f"Total sleep time: {sleep_time} seconds")
-    else:
-        print(f"Test completed. Password not found within {max_tries} attempts.")
-        print(f"Total sleep time: {sleep_time} seconds")
+    end_time = time.time()
+    duration = end_time - start_time - sleep_time
+    print(f"Bruteforce test completed in {duration} seconds, password found: {result}")
     print("=" * 50)
 
 def run_password_spraying_test(users_data):
@@ -84,10 +82,11 @@ def main():
     print("Initializing test data...")
     users_data = init_server_data.init_server_data()
 
-    # run_bruteforce_test(users_data)
+    # run_hash_to_time_test(users_data)
+
+    run_bruteforce_test(users_data)
 
     # run_password_spraying_test(users_data)
-    run_hash_to_time_test(users_data)
 
     # Cleanup server resources
     print("Cleaning up server resources...")

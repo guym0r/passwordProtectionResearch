@@ -1,6 +1,6 @@
 {
   "GROUP_SEED": "206360893",
-  "PASSWORD_HASH_TYPE": "bcrypt",
+  "PASSWORD_HASH_TYPE": "argon2id",
   "PEPPER": "secure_pepper",
   "USE_PEPPER": true,
   "BCRYPT":{
