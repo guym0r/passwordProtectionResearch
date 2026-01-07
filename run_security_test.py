@@ -39,22 +39,23 @@ def run_hash_to_time_test(users_data):
 def run_bruteforce_test(users_data):
     print("=" * 50)
     print("Starting bruteforce test...")
-    username = 'robert'
-    max_tries = 50000
-    otp_uri = users_data[username][1]
-    start_time = time.time()
-    result, sleep_time = bruteforce.start_test(username, max_tries, otp_uri=otp_uri)
-    
-    end_time = time.time()
-    duration = end_time - start_time - sleep_time
-    print(f"Bruteforce test completed in {duration} seconds, password found: {result}")
+    for username in users_data.keys():
+        max_tries = 50000
+        otp_uri = users_data[username][1]
+        password_type = users_data[username][2]
+        start_time = time.time()
+        result, sleep_time = bruteforce.start_test(username, max_tries, otp_uri=otp_uri)
+        
+        end_time = time.time()
+        duration = end_time - start_time - sleep_time
+        print(f"Bruteforce test completed in {duration} seconds, password type: {password_type}, password found: {result}")
     print("=" * 50)
 
 def run_password_spraying_test(users_data):
     print("=" * 50)
     print("Starting password spraying test...")
     max_tries = 50000
-    users_dict = {username: otp_uri for username, (password, otp_uri) in users_data.items()}
+    users_dict = {username: otp_uri for username, (password, otp_uri, password_type) in users_data.items()}
     result, sleep_time = password_spraying.start_test(users_dict, max_tries)
     if result:
         print(f"Password spraying test completed successfully!")

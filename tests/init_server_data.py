@@ -13,7 +13,7 @@ def init_server_data():
     with open(users_file_path, 'r') as f:
         users_data = json.load(f)
     
-    # Dictionary to store results: username -> (password, otp_uri)
+    # Dictionary to store results: username -> (password, otp_uri, password_type)
     result = {}
     
     # Register each user
@@ -21,13 +21,14 @@ def init_server_data():
         username = user['username']
         password = user['password']
         secret = user.get('secret', None)  # Get secret, will be None if not present or null
+        password_type = user['password_type']  # Get password_type, will be None if not present
         
         response, status_code = register(username, password, totp_secret=secret)
         
         # Print result
         if status_code == 200:
             otp_uri = response.get('totp_uri', None)
-            result[username] = (password, otp_uri)
+            result[username] = (password, otp_uri, password_type)
         else:
             print(f"Failed to register user: {username} - {response.get('error', 'Unknown error')}")
     
