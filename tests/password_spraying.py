@@ -3,8 +3,11 @@ import time
 import pyotp
 import requests
 from urllib.parse import urlparse, parse_qs
-from .client import login, login_totp
+from .client import login, login_totp, admin_get_captcha_token
 
+# GROUP_SEED from server_config.json (hardcoded for tests)
+GROUP_SEED = "206360893"
+CAPTCHA_SLEEP_TIME = 2
 
 def start_test(users_dict, max_attempts):
     # Get the directory where this script is located
@@ -38,6 +41,22 @@ def start_test(users_dict, max_attempts):
             # Try to login with this password
             try:
                 response, status_code, redirect_url = login(username, password)
+                
+                # Check if captcha is required
+                if status_code == 403 and response.get('captcha_required'):
+                    print(f"Captcha required, getting captcha token...")
+                    time.sleep(CAPTCHA_SLEEP_TIME)
+                    # Get captcha token and retry login
+                    captcha_response, captcha_status = admin_get_captcha_token(GROUP_SEED, username)
+                    if captcha_status == 200:
+                        captcha_token = captcha_response.get('captcha_token')
+                        if captcha_token:
+                            # Retry login with captcha token
+                            response, status_code, redirect_url = login(username, password, captcha_token=captcha_token)
+                    else:
+                        print(f"Failed to get captcha token, continuing to next attempt...")
+                        # Failed to get captcha token, continue to next attempt
+                        continue
             except Exception as e:
                 # Occurs sometimes when the server needs to clean up after a previous requests
                 print(f"Got connection error, waiting a second and continuing...")

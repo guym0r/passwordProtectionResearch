@@ -1,8 +1,11 @@
 import os
 import pyotp
 from urllib.parse import urlparse, parse_qs
-from .client import login, login_totp
+from .client import login, login_totp, admin_get_captcha_token
 
+# GROUP_SEED from server_config.json (hardcoded for tests)
+GROUP_SEED = "206360893"
+CAPTCHA_SLEEP_TIME = 2
 
 def start_test(username, max_tries, otp_uri=None):
     # Get the directory where this script is located
@@ -29,6 +32,22 @@ def start_test(username, max_tries, otp_uri=None):
             
             # Try to login with this password
             response, status_code, redirect_url = login(username, password)
+            
+            # Check if captcha is required
+            if status_code == 403 and response.get('captcha_required'):
+                print(f"Captcha required, getting captcha token...")
+                time.sleep(CAPTCHA_SLEEP_TIME)
+                # Get captcha token and retry login
+                captcha_response, captcha_status = admin_get_captcha_token(GROUP_SEED, username)
+                if captcha_status == 200:
+                    captcha_token = captcha_response.get('captcha_token')
+                    if captcha_token:
+                        # Retry login with captcha token
+                        response, status_code, redirect_url = login(username, password, captcha_token=captcha_token)
+                else:
+                    print(f"Failed to get captcha token, continuing to next password...")
+                    # Failed to get captcha token, continue to next password
+                    continue
             
             # Check if login was successful
             # Status 200 = success (no TOTP)
