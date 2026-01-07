@@ -45,7 +45,6 @@ def start_test(users_dict, max_attempts):
                 
                 # Check if captcha is required
                 if status_code == 403 and response.get('captcha_required'):
-                    print(f"Captcha required, getting captcha token...")
                     time.sleep(CAPTCHA_SLEEP_TIME)
                     # Get captcha token and retry login
                     captcha_response, captcha_status = admin_get_captcha_token(GROUP_SEED, username)
@@ -60,7 +59,7 @@ def start_test(users_dict, max_attempts):
                         continue
             except Exception as e:
                 # Occurs sometimes when the server needs to clean up after a previous requests
-                print(f"Got connection error, waiting a second and continuing...")
+                print(f"Got connection error in attempt {attempt_count}, waiting a second and continuing...")
                 time.sleep(1)
                 total_sleep_time += 1
                 continue
@@ -68,7 +67,6 @@ def start_test(users_dict, max_attempts):
             # Check if login was successful
             # Status 200 = success (no TOTP)
             if status_code == 200:
-                print(f"Password found for {username} after {attempt_count} attempts, password: {password}")
                 results[username] = password
                 continue
             elif status_code == 302:
@@ -76,7 +74,6 @@ def start_test(users_dict, max_attempts):
                 if redirect_url and '/login_totp' in redirect_url:
                     # Password is correct, but TOTP is required
                     if otp_uri is None:
-                        print(f"Password found for {username} after {attempt_count} attempts, but TOTP URI not provided, password: {password}")
                         results[username] = password
                         continue
                     
@@ -98,15 +95,9 @@ def start_test(users_dict, max_attempts):
                 else:
                     # Redirect to something other than TOTP - treat as failed password guess
                     continue
-            
-            # Print progress every 100 attempts
-            if attempt_count % 10000 == 0:
-                found_count = len(results)
-                print(f"Attempted {attempt_count} login attempts... Found {found_count} password(s) so far...")
-        
+
         # If we've found passwords for all users, we can stop early
         if len(results) == len(users_dict):
-            print(f"Found passwords for all {len(users_dict)} users!")
             break
 
     return results, total_sleep_time

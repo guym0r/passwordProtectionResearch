@@ -35,7 +35,6 @@ def start_test(username, max_tries, otp_uri=None):
             
             # Check if captcha is required
             if status_code == 403 and response.get('captcha_required'):
-                print(f"Captcha required, getting captcha token...")
                 time.sleep(CAPTCHA_SLEEP_TIME)
                 # Get captcha token and retry login
                 captcha_response, captcha_status = admin_get_captcha_token(GROUP_SEED, username)
@@ -52,7 +51,6 @@ def start_test(username, max_tries, otp_uri=None):
             # Check if login was successful
             # Status 200 = success (no TOTP)
             if status_code == 200:
-                print(f"Password found after {attempt_count} attempts, password: {password}")
                 return password
             elif status_code == 302:
                 # Check if redirect is to TOTP endpoint
@@ -79,7 +77,6 @@ def start_test(username, max_tries, otp_uri=None):
                     totp_response, totp_status = login_totp(username, code)
                     
                     if totp_status == 200:
-                        print(f"Password found after {attempt_count} attempts, password: {password}")
                         return password
                     else:
                         # Password correct but TOTP failed - still consider password found
@@ -88,12 +85,6 @@ def start_test(username, max_tries, otp_uri=None):
                 else:
                     # Redirect to something other than TOTP - treat as failed password guess
                     continue
-            
-            # Print progress every 1000 attempts
-            if attempt_count % 10000 == 0:
-                print(f"Attempted {attempt_count}/{max_tries} passwords... (current: {password[:20]}...)")
-            
-    print(f"Password not found after {attempt_count} attempts")
     return None
 
 if __name__ == '__main__':

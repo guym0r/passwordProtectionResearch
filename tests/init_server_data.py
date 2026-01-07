@@ -26,7 +26,6 @@ def init_server_data():
         
         # Print result
         if status_code == 200:
-            print(f"Registered user: {username}")
             otp_uri = response.get('totp_uri', None)
             result[username] = (password, otp_uri)
         else:

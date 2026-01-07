@@ -23,7 +23,39 @@ def wait_for_server(max_wait=30):
         time.sleep(1)
     return False
 
+def run_hash_to_time_test(users_data):
+    print("Starting hash to time test...")
+    username = 'robert'
+    max_tries = 50000
+    otp_uri = users_data[username][1]
+    result = hash_to_time.start_test(username, max_tries, otp_uri=otp_uri)
+    if result:
+        print(f"Test completed successfully. Password found: {result}")
+    else:
+        print(f"Test completed. Password not found within {max_tries} attempts.")
 
+def run_bruteforce_test(users_data):
+    print("Starting bruteforce test...")
+    username = 'robert'
+    max_tries = 50000
+    otp_uri = users_data[username][1]
+    result = bruteforce.start_test(username, max_tries, otp_uri=otp_uri)
+    
+    if result:
+        print(f"Test completed successfully. Password found: {result}")
+    else:
+        print(f"Test completed. Password not found within {max_tries} attempts.")
+
+def run_password_spraying_test(users_data):
+    print("Starting password spraying test...")
+    max_tries = 50000
+    users_dict = {username: otp_uri for username, (password, otp_uri) in users_data.items()}
+    result, sleep_time = password_spraying.start_test(users_dict, max_tries)
+    if result:
+        print(f"Password spraying test completed successfully!")
+        print(f"Found passwords for {len(result)} user(s):")
+        for username, password in result.items():
+            print(f"  {username}: {password}")
 
 def main():
     print("Starting security tests...")
@@ -36,45 +68,18 @@ def main():
     server_thread = threading.Thread(target=start_server, daemon=True)
     server_thread.start()
     
-    # Wait for server to be ready
-    print("Waiting for server to be ready...")
     if not wait_for_server():
         print("Error: Server failed to start within timeout period")
         return
     
-    print("Server is ready!")
-    
     # Initialize test data (register users)
     print("Initializing test data...")
     users_data = init_server_data.init_server_data()
-    
-    # Run bruteforce test
-    print("Starting bruteforce test...")
-    username = 'robert'
-    max_tries = 50000
-    otp_uri = users_data[username][1]
-    result = bruteforce.start_test(username, max_tries, otp_uri=otp_uri)
-    
-    if result:
-        print(f"Test completed successfully. Password found: {result}")
-    else:
-        print(f"Test completed. Password not found within {max_tries} attempts.")
 
-    # Prepare users_dict for password spraying: username -> otp_uri
-    users_dict = {username: otp_uri for username, (password, otp_uri) in users_data.items()}
-    
-    # Run password spraying test
-    print("Starting password spraying test...")
-    result, sleep_time = password_spraying.start_test(users_dict, max_tries)
-    
-    if result:
-        print(f"Password spraying test completed successfully!")
-        print(f"Found passwords for {len(result)} user(s):")
-        for username, password in result.items():
-            print(f"  {username}: {password}")
-    else:
-        print(f"Password spraying test completed. No passwords found within {max_tries} attempts.")
-    
+    run_bruteforce_test(users_data)
+
+    run_password_spraying_test(users_data)
+
     # Cleanup server resources
     print("Cleaning up server resources...")
     cleanup_server()
