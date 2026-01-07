@@ -9,36 +9,36 @@ from .client import login, login_totp, admin_get_captcha_token
 GROUP_SEED = "206360893"
 CAPTCHA_SLEEP_TIME = 2
 
-def start_test(users_dict, max_attempts):
+def start_test(users_dict, max_attempts, progress_counter=0):
     # Get the directory where this script is located
     script_dir = os.path.dirname(os.path.abspath(__file__))
     rockyou_file_path = os.path.join(script_dir, 'rockyou.txt')
     
-    # Read first 10000 passwords from rockyou.txt
+    # Read up to max_attempts passwords from rockyou.txt
     passwords = []
     with open(rockyou_file_path, 'r', encoding='utf-8', errors='ignore') as f:
         for i, line in enumerate(f):
-            if i >= 10000:
+            if i >= max_attempts:
                 break
             password = line.strip()
             if password:  # Skip empty lines
                 passwords.append(password)
     
     results = {}
-    attempt_count = 0
+    password_attempt_count = 0
     total_sleep_time = 0
     
     # Try each password against all users
     for password in passwords:
         # Try this password against each user
+        if progress_counter > 0 and password_attempt_count % progress_counter == 0:
+            print(f"Attempt {password_attempt_count}")
+        password_attempt_count += 1
+        
         for username, otp_uri in users_dict.items():
             # Skip users we've already found passwords for
             if username in results:
                 continue
-            if attempt_count >= max_attempts:
-                return results, total_sleep_time
-            
-            attempt_count += 1
             # Try to login with this password
             try:
                 response, status_code, redirect_url = login(username, password)
@@ -66,7 +66,7 @@ def start_test(users_dict, max_attempts):
                         continue
             except Exception as e:
                 # Occurs sometimes when the server needs to clean up after a previous requests
-                print(f"Got connection error in attempt {attempt_count}, waiting a second and continuing...")
+                print(f"Got connection error in attempt {password_attempt_count}, waiting a second and continuing...")
                 time.sleep(1)
                 total_sleep_time += 1
                 continue
@@ -98,7 +98,7 @@ def start_test(users_dict, max_attempts):
                     results[username] = password
                     
                     if totp_status != 200:
-                        print(f"Password found for {username} after {attempt_count} attempts, but TOTP verification failed, password: {password}")
+                        print(f"Password found for {username} after {password_attempt_count} attempts, but TOTP verification failed, password: {password}")
                 else:
                     # Redirect to something other than TOTP - treat as failed password guess
                     continue

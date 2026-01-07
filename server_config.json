@@ -21,11 +21,11 @@
   "RATE_LIMIT_CONFIG": [
     {
       "attempts": 5,
-      "lockout_seconds": 10
+      "lockout_seconds": 1
     },
     {
       "attempts": 10,
-      "lockout_seconds": 30
+      "lockout_seconds": 2
     }
   ],
   "CAPTCHA": {

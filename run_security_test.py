@@ -101,11 +101,13 @@ def print_password_spraying_test_summary(users_data, found_results):
         
         print(f"{password_type} password type: Found: {found}/{total} ({found_percentage:.1f}%), Not found: {not_found}/{total}")
 
-def run_password_spraying_test(users_data, max_attempts=10000):
+def run_password_spraying_test(users_data, max_attempts=20):
     print("=" * 50)
+    users_data = init_server_data.add_random_users(users_data, 1000, 1000)
+    
     print("Starting password spraying test...")
     users_dict = {username: otp_uri for username, (password, otp_uri, password_type) in users_data.items()}
-    result, sleep_time = password_spraying.start_test(users_dict, max_attempts)
+    result, sleep_time = password_spraying.start_test(users_dict, max_attempts, progress_counter=4)
     if result:
         print(f"Password spraying test completed successfully!")
         print(f"Found passwords for {len(result)} users")
@@ -129,9 +131,9 @@ def main():
 
     # run_hash_to_time_test(users_data)
 
-    run_bruteforce_test(users_data, max_attempts=3000)
+    # run_bruteforce_test(users_data)
 
-    # run_password_spraying_test(users_data)
+    run_password_spraying_test(users_data)
 
     # Cleanup server resources
     print("Cleaning up server resources...")
