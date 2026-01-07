@@ -35,11 +35,11 @@ def run_hash_to_time_test(users_data):
     print(f"Hash to time test completed in {duration} seconds")
     print("=" * 50)
 
-def run_bruteforce_test(users_data):
+def run_bruteforce_test(users_data, max_tries=50000):
     print("=" * 50)
     print("Starting bruteforce test...")
+    password_type_counts = {}
     for username in users_data.keys():
-        max_tries = 50000
         otp_uri = users_data[username][1]
         password_type = users_data[username][2]
         start_time = time.time()
@@ -47,7 +47,33 @@ def run_bruteforce_test(users_data):
         
         end_time = time.time()
         duration = end_time - start_time - sleep_time
-        print(f"Bruteforce test completed in {duration} seconds, password type: {password_type}, password found: {result}")
+        if password_type not in password_type_counts:
+            password_type_counts[password_type] = []
+        password_type_counts[password_type].append((duration, result))
+        print(f"{username}: {password_type} password type: {duration} seconds")
+
+    print("bruteforce test summary:")
+    for password_type in password_type_counts.keys():   
+        total_successful_duration = 0
+        total_failed_duration = 0
+        successful_attempts = 0
+        failed_attempts = 0
+        for duration, result in password_type_counts[password_type]:
+            if result:
+                successful_attempts += 1
+                total_successful_duration += duration
+            else:
+                failed_attempts += 1
+                total_failed_duration += duration
+        if successful_attempts > 0 and failed_attempts > 0:
+            print(f"{password_type} password type: Successful attempts: {successful_attempts}, Failed attempts: {failed_attempts}, average successful duration: {total_successful_duration / successful_attempts:.2f} seconds, average failed duration: {total_failed_duration / failed_attempts:.2f} seconds")
+        elif successful_attempts > 0:
+            print(f"{password_type} password type: Successful attempts: {successful_attempts}, Failed attempts: {failed_attempts}, average successful duration: {total_successful_duration / successful_attempts:.2f} seconds")
+        elif failed_attempts > 0:
+            print(f"{password_type} password type: Successful attempts: {successful_attempts}, Failed attempts: {failed_attempts}, average failed duration: {total_failed_duration / failed_attempts:.2f} seconds")
+        else:
+            print(f"{password_type} password type: No attempts recorded")
+    
     print("=" * 50)
 
 def run_password_spraying_test(users_data):
