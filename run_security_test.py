@@ -78,16 +78,39 @@ def run_bruteforce_test(users_data, max_tries=50000):
     print_bruteforce_test_summary(password_type_counts)
     print("=" * 50)
 
-def run_password_spraying_test(users_data, max_attempts=50000):
+def print_password_spraying_test_summary(users_data, found_results):
+    print("password spraying test summary:")
+    # Group users by password_type
+    password_type_stats = {}
+    
+    # Initialize stats for each password type
+    for username, (password, otp_uri, password_type) in users_data.items():
+        if password_type not in password_type_stats:
+            password_type_stats[password_type] = {'found': 0, 'total': 0}
+        password_type_stats[password_type]['total'] += 1
+        if username in found_results:
+            password_type_stats[password_type]['found'] += 1
+    
+    # Print summary for each password type
+    for password_type in sorted(password_type_stats.keys()):
+        stats = password_type_stats[password_type]
+        found = stats['found']
+        total = stats['total']
+        not_found = total - found
+        found_percentage = (found / total * 100) if total > 0 else 0
+        
+        print(f"{password_type} password type: Found: {found}/{total} ({found_percentage:.1f}%), Not found: {not_found}/{total}")
+
+def run_password_spraying_test(users_data, max_attempts=10000):
     print("=" * 50)
     print("Starting password spraying test...")
     users_dict = {username: otp_uri for username, (password, otp_uri, password_type) in users_data.items()}
     result, sleep_time = password_spraying.start_test(users_dict, max_attempts)
     if result:
         print(f"Password spraying test completed successfully!")
-        print(f"Found passwords for {len(result)} user(s):")
-        for username, password in result.items():
-            print(f"{username}: {password}")
+        print(f"Found passwords for {len(result)} users")
+    
+    print_password_spraying_test_summary(users_data, result if result else {})
     print("=" * 50)
 
 def main():
@@ -108,7 +131,7 @@ def main():
 
     # run_bruteforce_test(users_data)
 
-    run_password_spraying_test(users_data, max_attempts=100)
+    run_password_spraying_test(users_data)
 
     # Cleanup server resources
     print("Cleaning up server resources...")
