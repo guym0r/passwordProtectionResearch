@@ -4,6 +4,7 @@ import os
 import sqlite3
 import atexit
 import argparse
+import logging
 from enum import Enum
 from datetime import datetime
 from server_utils.password_handlers import PASSWORD_HANDLERS
@@ -377,6 +378,10 @@ def admin_unlock_user():
 
 
 def start_server(config_file_path='server_config.json'):
+    # Disable Flask/Werkzeug request logging
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
+    
     init_server_data(config_file_path)
     app.run(host='0.0.0.0', port=8000)
     

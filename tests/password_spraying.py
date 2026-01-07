@@ -1,5 +1,7 @@
 import os
+import time
 import pyotp
+import requests
 from urllib.parse import urlparse, parse_qs
 from .client import login, login_totp
 
@@ -34,13 +36,18 @@ def start_test(users_dict, max_attempts):
             
             attempt_count += 1
             # Try to login with this password
-            response, status_code, redirect_url = login(username, password)
+            try:
+                response, status_code, redirect_url = login(username, password)
+            except Exception as e:
+                # Occurs sometimes when the server needs to clean up after a previous requests
+                print(f"Got connection error, waiting a second and continuing...")
+                time.sleep(1)
+                continue
             
             # Check if login was successful
             # Status 200 = success (no TOTP)
             if status_code == 200:
-                print(f"Password found for {username} after {attempt_count} attempts!")
-                print(f"Password: {password}")
+                print(f"Password found for {username} after {attempt_count} attempts, password: {password}")
                 results[username] = password
                 continue
             elif status_code == 302:
@@ -48,8 +55,7 @@ def start_test(users_dict, max_attempts):
                 if redirect_url and '/login_totp' in redirect_url:
                     # Password is correct, but TOTP is required
                     if otp_uri is None:
-                        print(f"Password found for {username} after {attempt_count} attempts, but TOTP URI not provided!")
-                        print(f"Password: {password}")
+                        print(f"Password found for {username} after {attempt_count} attempts, but TOTP URI not provided, password: {password}")
                         results[username] = password
                         continue
                     
@@ -65,19 +71,15 @@ def start_test(users_dict, max_attempts):
                     # Try to verify TOTP
                     totp_response, totp_status = login_totp(username, code)
                     results[username] = password
-                    print(f"Password: {password}")
                     
-                    if totp_status == 200:
-                        print(f"TOTP verification successful!")
-                    else:
-                        # Password correct but TOTP failed - still consider password found
-                        print(f"Password found for {username} after {attempt_count} attempts, but TOTP verification failed!")
+                    if totp_status != 200:
+                        print(f"Password found for {username} after {attempt_count} attempts, but TOTP verification failed, password: {password}")
                 else:
                     # Redirect to something other than TOTP - treat as failed password guess
                     continue
             
             # Print progress every 100 attempts
-            if attempt_count % 100 == 0:
+            if attempt_count % 10000 == 0:
                 found_count = len(results)
                 print(f"Attempted {attempt_count} login attempts... Found {found_count} password(s) so far...")
         
