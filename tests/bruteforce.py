@@ -6,9 +6,8 @@ from .client import login, login_totp, admin_get_captcha_token
 
 # GROUP_SEED from server_config.json (hardcoded for tests)
 GROUP_SEED = "206360893"
-CAPTCHA_SLEEP_TIME = 2
 
-def start_test(username, max_tries, otp_uri=None, progress_counter=0):
+def start_test(username, max_tries, otp_uri=None, progress_counter=0, captcha_sleep_time=2):
     # Get the directory where this script is located
     script_dir = os.path.dirname(os.path.abspath(__file__))
     rockyou_file_path = os.path.join(script_dir, 'rockyou.txt')
@@ -59,7 +58,9 @@ def start_test(username, max_tries, otp_uri=None, progress_counter=0):
             
             # Check if captcha is required
             if status_code == 403 and response.get('captcha_required'):
-                time.sleep(CAPTCHA_SLEEP_TIME)
+                print(f"Captcha required for user {username}, simulate captcha by sleep for {captcha_sleep_time} seconds...")
+                time.sleep(captcha_sleep_time)
+                
                 # Get captcha token and retry login
                 captcha_response, captcha_status = admin_get_captcha_token(GROUP_SEED, username)
                 if captcha_status == 200:

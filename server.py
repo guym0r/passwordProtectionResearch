@@ -117,7 +117,7 @@ def create_new_user(username, password, secret=None):
     
     return UserCreationResult.USER_CREATED, totp_uri
 
-def init_server_data(config_file_path):
+def init_server_data(config_file_path, cli_enabled_features):
     """Initialize server: load config, initialize security hooks, create database and log file"""
     if not os.path.exists(config_file_path):
         raise RuntimeError(f"Config file not found: {config_file_path}")
@@ -125,6 +125,11 @@ def init_server_data(config_file_path):
     with open(config_file_path, 'r') as f:
         config_data = json.load(f)
     
+    config_enabled_features = config_data.get('ENABLED_SECURITY_FEATURES', [])
+    # Combine and remove duplicates
+    combined_features = list(set(config_enabled_features + cli_enabled_features))
+    config_data['ENABLED_SECURITY_FEATURES'] = combined_features
+
     # Store config in app.config
     app.config['CONFIG'] = config_data
     
@@ -386,16 +391,44 @@ def admin_unlock_user():
     return jsonify({'message': 'User account unlocked successfully', 'username': username}), 200
 
 
-def start_server(config_file_path='server_config.json'):
+def start_server(config_file_path='server_config.json', cli_enabled_features=[]):
     # Disable Flask/Werkzeug request logging
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
     
-    init_server_data(config_file_path)
+    init_server_data(config_file_path, cli_enabled_features)
     app.run(host='0.0.0.0', port=8000)
     
 if __name__ == '__main__':
     # Register cleanup function when running directly
     atexit.register(cleanup_server)
-    start_server()
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Password Protection Research Server')
+    parser.add_argument('--config', type=str, default='server_config.json',
+                        help='Path to server configuration file (default: server_config.json)')
+    parser.add_argument('--enable-rate-limit', action='store_true',
+                        help='Enable rate limiting (overrides config)')
+    parser.add_argument('--enable-account-lockout', action='store_true',
+                        help='Enable account lockout (overrides config)')
+    parser.add_argument('--enable-captcha', action='store_true',
+                        help='Enable CAPTCHA (overrides config)')
+    parser.add_argument('--enable-totp', action='store_true',
+                        help='Enable TOTP (overrides config)')
+    
+    args = parser.parse_args()
+    
+    # Collect CLI-enabled features
+    cli_enabled_features = []
+    if args.enable_rate_limit:
+        cli_enabled_features.append('rate_limit')
+    if args.enable_account_lockout:
+        cli_enabled_features.append('account_lockout')
+    if args.enable_captcha:
+        cli_enabled_features.append('captcha')
+    if args.enable_totp:
+        cli_enabled_features.append('totp')
+    
+    # Start server with CLI arguments
+    start_server(config_file_path=args.config, cli_enabled_features=cli_enabled_features)
 

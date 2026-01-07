@@ -23,6 +23,7 @@ def init_security_hooks(config):
     
     for feature_name in ALL_SECURITY_FEATURES:
         if feature_name in config_enabled_features:
+            print(f"Enabled security feature: {feature_name}")
             enabled_security_hooks[feature_name] = (ALL_SECURITY_FEATURES[feature_name])
 
 def run_pre_login_hooks(username, password, config, request_params=None):

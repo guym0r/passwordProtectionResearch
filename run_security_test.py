@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 import time
 import atexit
 import requests
@@ -74,10 +75,10 @@ def print_bruteforce_test_summary(password_type_counts):
         else:
             print(f"{password_type} password type: No attempts recorded")
 
-def run_bruteforce_test(users_data, max_attempts=50000):
+def run_bruteforce_test(users_data, max_attempts=50000, enable_otp=False, captcha_sleep_time=2):
     print("=" * 50)
-    # uncomment to run tests only on users with TOTP enabled
-    users_data = filter_users_with_otp(users_data)
+    if enable_otp:
+        users_data = filter_users_with_otp(users_data)
     print("Starting bruteforce test...")
     
     password_type_counts = {}
@@ -85,7 +86,7 @@ def run_bruteforce_test(users_data, max_attempts=50000):
         otp_uri = users_data[username][1]
         password_type = users_data[username][2]
         start_time = time.time()
-        result, sleep_time = bruteforce.start_test(username, max_attempts, otp_uri=otp_uri, progress_counter=1000)
+        result, sleep_time = bruteforce.start_test(username, max_attempts, otp_uri=otp_uri, progress_counter=1000, captcha_sleep_time=captcha_sleep_time)
         
         end_time = time.time()
         duration = end_time - start_time - sleep_time
@@ -120,16 +121,16 @@ def print_password_spraying_test_summary(users_data, found_results):
         
         print(f"{password_type} password type: Found: {found}/{total} ({found_percentage:.1f}%), Not found: {not_found}/{total}")
 
-def run_password_spraying_test(users_data, max_attempts=20):
+def run_password_spraying_test(users_data, max_attempts=20, enable_otp=False, captcha_sleep_time=2):
     print("=" * 50)
     users_data = init_server_data.add_random_users(users_data, 1000, 1000)
 
-    # uncomment to run tests only on users with TOTP enabled
-    users_data = filter_users_with_otp(users_data)
+    if enable_otp:
+        users_data = filter_users_with_otp(users_data)
     
     print("Starting password spraying test...")
     users_dict = {username: otp_uri for username, (password, otp_uri, password_type) in users_data.items()}
-    result, sleep_time = password_spraying.start_test(users_dict, max_attempts, progress_counter=4)
+    result, sleep_time = password_spraying.start_test(users_dict, max_attempts, progress_counter=4, captcha_sleep_time=captcha_sleep_time)
     if result:
         print(f"Password spraying test completed successfully!")
         print(f"Found passwords for {len(result)} users")
@@ -137,8 +138,44 @@ def run_password_spraying_test(users_data, max_attempts=20):
     print_password_spraying_test_summary(users_data, result if result else {})
     print("=" * 50)
 
+def load_test_config(config_file='security_test_config.json'):
+    """Load test configuration from JSON file"""
+    if not os.path.exists(config_file):
+        raise RuntimeError(f"Test config file not found: {config_file}")
+    
+    with open(config_file, 'r') as f:
+        return json.load(f)
+
+def build_server_command(enabled_features):
+    """Build command line string for running server.py with enabled features"""
+    cmd_parts = ['python3', 'server.py']
+    
+    if 'rate_limit' in enabled_features:
+        cmd_parts.append('--enable-rate-limit')
+    if 'captcha' in enabled_features:
+        cmd_parts.append('--enable-captcha')
+    if 'account_lockout' in enabled_features:
+        cmd_parts.append('--enable-account-lockout')
+    if 'totp' in enabled_features:
+        cmd_parts.append('--enable-totp')
+    
+    return ' '.join(cmd_parts)
+
 def main():
     print("Starting security tests...")
+    
+    # Load test configuration
+    test_config = load_test_config()
+    enabled_features = test_config['ENABLED_SECURITY_FEATURES']
+    enable_otp = 'totp' in enabled_features
+    test_type = test_config['TEST_TYPE']
+    bruteforce_max_attempts = test_config['BRUTEFORCE_MAX_ATTEMPTS']
+    max_password_spraying = test_config['MAX_PASSWORD_SPRAYING']
+    captcha_sleep_time = test_config['CAPTCHA_SIMULATE_SLEEP_TIME']
+    
+    # Build and print server command
+    server_cmd = build_server_command(enabled_features)
+    print(f"\nServer command: {server_cmd}\n")
     
     # Register cleanup function with atexit as a safety net
     atexit.register(cleanup_server)
@@ -151,14 +188,17 @@ def main():
     print("Initializing test data...")
     users_data = init_server_data.init_server_data()
 
-    # uncomment to run hash to time test
-    # run_hash_to_time_test(users_data)
 
-    # uncomment to run bruteforce test
-    # run_bruteforce_test(users_data)
-    
-    # uncomment to run password spraying test
-    # run_password_spraying_test(users_data)
+    # Run test based on TEST_TYPE
+    if test_type == 'bruteforce':
+        run_bruteforce_test(users_data, max_attempts=bruteforce_max_attempts, enable_otp=enable_otp, captcha_sleep_time=captcha_sleep_time)
+    elif test_type == 'password_spraying':
+        run_password_spraying_test(users_data, max_attempts=max_password_spraying, enable_otp=enable_otp, captcha_sleep_time=captcha_sleep_time)
+    elif test_type == 'hash_to_time':
+        run_hash_to_time_test(users_data)
+    else:
+        print(f"Unknown test type: {test_type}")
+        print(f"Available test types: {test_config.get('AVAILABLE_TEST_TYPES', [])}")
 
     # Cleanup server resources
     print("Cleaning up server resources...")
