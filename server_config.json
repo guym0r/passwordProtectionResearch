@@ -1,8 +1,12 @@
 {
   "GROUP_SEED": "206360893",
+  "LOGGING": {
+    "ENABLED": false,
+    "FILE_NAME": "attempts.log"
+  },
   "PASSWORD_HASH_TYPE": "sha256-salt",
   "PEPPER": "secure_pepper",
-  "USE_PEPPER": true,
+  "USE_PEPPER": false,
   "BCRYPT":{
     "COST": 12
   },

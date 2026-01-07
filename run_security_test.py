@@ -1,7 +1,6 @@
 import sys
 import os
 import time
-import threading
 import atexit
 import requests
 from server import start_server, cleanup_server
@@ -44,7 +43,7 @@ def run_bruteforce_test(users_data):
         otp_uri = users_data[username][1]
         password_type = users_data[username][2]
         start_time = time.time()
-        result, sleep_time = bruteforce.start_test(username, max_tries, otp_uri=otp_uri)
+        result, sleep_time = bruteforce.start_test(username, max_tries, otp_uri=otp_uri, progress_counter=1000)
         
         end_time = time.time()
         duration = end_time - start_time - sleep_time
@@ -69,11 +68,6 @@ def main():
     
     # Register cleanup function with atexit as a safety net
     atexit.register(cleanup_server)
-    
-    # Start server in a separate thread
-    print("Starting server...")
-    server_thread = threading.Thread(target=start_server, daemon=True)
-    server_thread.start()
     
     if not wait_for_server():
         print("Error: Server failed to start within timeout period")

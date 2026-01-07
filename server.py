@@ -14,9 +14,8 @@ from server_utils.account_lockout_hook import reset_account_lockout
 
 import pyotp
 
-# Constants for database and log file paths
+# Constants for database path
 DB_FILE = "users.db"
-LOG_FILE = "attempts.log"
 
 app = Flask(__name__)
 
@@ -30,7 +29,7 @@ class UserCreationResult(Enum):
 def cleanup_server():
     """Cleanup function to close database connection, log file, and remove database file"""
     # Close log file
-    if 'LOG_FILE' in app.config:
+    if 'LOG_FILE' in app.config and app.config['LOG_FILE']:
         app.config['LOG_FILE'].close()
     
     # Close database connection and remove database file
@@ -45,6 +44,11 @@ def cleanup_server():
 
 def log_login_attempt(username, success):
     """Log login attempt to attempts.log file in JSON format"""
+    # Check if logging is enabled
+    logging_config = app.config['CONFIG']['LOGGING']
+    if not logging_config['ENABLED']:
+        return
+    
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     group_seed = app.config['CONFIG']['GROUP_SEED']
     hashmode = app.config['CONFIG']['PASSWORD_HASH_TYPE']
@@ -146,9 +150,14 @@ def init_server_data(config_file_path):
     app.config['DB_CONN'] = conn
     app.config['DB_PATH'] = DB_FILE
     
-    # Open attempts.log file and keep it open
-    log_file = open(LOG_FILE, 'a')
-    app.config['LOG_FILE'] = log_file
+    # Get log file name from config, only open if logging is enabled
+    logging_config = config_data['LOGGING']
+    if logging_config['ENABLED']:
+        log_file_name = logging_config['FILE_NAME']
+        log_file = open(log_file_name, 'a')
+        app.config['LOG_FILE'] = log_file
+    else:
+        app.config['LOG_FILE'] = None
 
 @app.route('/get_users', methods=['GET'])
 def get_users():
