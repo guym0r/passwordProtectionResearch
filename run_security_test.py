@@ -78,12 +78,11 @@ def run_bruteforce_test(users_data, max_tries=50000):
     print_bruteforce_test_summary(password_type_counts)
     print("=" * 50)
 
-def run_password_spraying_test(users_data):
+def run_password_spraying_test(users_data, max_attempts=50000):
     print("=" * 50)
     print("Starting password spraying test...")
-    max_tries = 50000
     users_dict = {username: otp_uri for username, (password, otp_uri, password_type) in users_data.items()}
-    result, sleep_time = password_spraying.start_test(users_dict, max_tries)
+    result, sleep_time = password_spraying.start_test(users_dict, max_attempts)
     if result:
         print(f"Password spraying test completed successfully!")
         print(f"Found passwords for {len(result)} user(s):")
@@ -107,9 +106,9 @@ def main():
 
     # run_hash_to_time_test(users_data)
 
-    run_bruteforce_test(users_data)
+    # run_bruteforce_test(users_data)
 
-    # run_password_spraying_test(users_data)
+    run_password_spraying_test(users_data, max_attempts=100)
 
     # Cleanup server resources
     print("Cleaning up server resources...")
