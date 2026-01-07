@@ -43,6 +43,13 @@ def start_test(users_dict, max_attempts):
             try:
                 response, status_code, redirect_url = login(username, password)
                 
+                # Check if rate limit is exceeded
+                if status_code == 403 and 'retry_after' in response:
+                    retry_after = response.get('retry_after', 0)
+                    if retry_after > 0:
+                        print(f"Rate limit exceeded, continuing to next attempt...")
+                    continue
+                
                 # Check if captcha is required
                 if status_code == 403 and response.get('captcha_required'):
                     time.sleep(CAPTCHA_SLEEP_TIME)

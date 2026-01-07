@@ -41,6 +41,14 @@ def start_test(username, max_tries, otp_uri=None, progress_counter=0):
                 total_sleep_time += 1
                 continue
             
+            # Check if rate limit is exceeded
+            if status_code == 403 and 'retry_after' in response:
+                retry_after = response.get('retry_after', 0)
+                if retry_after > 0:
+                    print(f"Rate limit exceeded, waiting {retry_after} seconds...")
+                    time.sleep(retry_after)
+                continue
+            
             # Check if captcha is required
             if status_code == 403 and response.get('captcha_required'):
                 time.sleep(CAPTCHA_SLEEP_TIME)

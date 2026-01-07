@@ -58,7 +58,7 @@ def print_bruteforce_test_summary(password_type_counts):
         else:
             print(f"{password_type} password type: No attempts recorded")
 
-def run_bruteforce_test(users_data, max_tries=50000):
+def run_bruteforce_test(users_data, max_attempts=50000):
     print("=" * 50)
     print("Starting bruteforce test...")
     password_type_counts = {}
@@ -66,7 +66,7 @@ def run_bruteforce_test(users_data, max_tries=50000):
         otp_uri = users_data[username][1]
         password_type = users_data[username][2]
         start_time = time.time()
-        result, sleep_time = bruteforce.start_test(username, max_tries, otp_uri=otp_uri, progress_counter=1000)
+        result, sleep_time = bruteforce.start_test(username, max_attempts, otp_uri=otp_uri, progress_counter=1000)
         
         end_time = time.time()
         duration = end_time - start_time - sleep_time
@@ -129,9 +129,9 @@ def main():
 
     # run_hash_to_time_test(users_data)
 
-    # run_bruteforce_test(users_data)
+    run_bruteforce_test(users_data, max_attempts=3000)
 
-    run_password_spraying_test(users_data)
+    # run_password_spraying_test(users_data)
 
     # Cleanup server resources
     print("Cleaning up server resources...")
