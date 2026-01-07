@@ -1,0 +1,42 @@
+{
+  "GROUP_SEED": "206360893",
+  "LOGGING": {
+    "ENABLED": false,
+    "FILE_NAME": "attempts.log"
+  },
+  "PASSWORD_HASH_TYPE": "sha256-salt",
+  "PEPPER": "secure_pepper",
+  "USE_PEPPER": false,
+  "BCRYPT":{
+    "COST": 12
+  },
+  "ARGON2ID":{
+    "TIME_COST": 1,
+    "MEMORY_COST": 65536,
+    "PARALLELISM": 1,
+    "HASH_LEN": 32,
+    "SALT_LEN": 16
+  },
+  "ENABLED_SECURITY_FEATURES": ["totp"],
+  "RATE_LIMIT_CONFIG": [
+    {
+      "attempts": 5,
+      "lockout_seconds": 1
+    },
+    {
+      "attempts": 10,
+      "lockout_seconds": 2
+    }
+  ],
+  "CAPTCHA": {
+    "THRESHOLD": 5
+  },
+  "TOTP": {
+    "ISSUER": "web-auth",
+    "TIME_WINDOW": 1
+  },
+  "ACCOUNT_LOCKOUT": {
+    "THRESHOLD": 10
+  }
+}
+
