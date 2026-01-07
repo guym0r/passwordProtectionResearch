@@ -65,7 +65,7 @@ def main():
     
     # Run password spraying test
     print("Starting password spraying test...")
-    result = password_spraying.start_test(users_dict, max_tries)
+    result, sleep_time = password_spraying.start_test(users_dict, max_tries)
     
     if result:
         print(f"Password spraying test completed successfully!")

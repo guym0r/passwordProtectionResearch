@@ -26,6 +26,7 @@ def start_test(users_dict, max_attempts):
     
     results = {}
     attempt_count = 0
+    total_sleep_time = 0
     
     # Try each password against all users
     for password in passwords:
@@ -35,7 +36,7 @@ def start_test(users_dict, max_attempts):
             if username in results:
                 continue
             if attempt_count >= max_attempts:
-                return results
+                return results, total_sleep_time
             
             attempt_count += 1
             # Try to login with this password
@@ -61,6 +62,7 @@ def start_test(users_dict, max_attempts):
                 # Occurs sometimes when the server needs to clean up after a previous requests
                 print(f"Got connection error, waiting a second and continuing...")
                 time.sleep(1)
+                total_sleep_time += 1
                 continue
             
             # Check if login was successful
@@ -107,7 +109,7 @@ def start_test(users_dict, max_attempts):
             print(f"Found passwords for all {len(users_dict)} users!")
             break
 
-    return results
+    return results, total_sleep_time
 
 if __name__ == '__main__':
     # Example usage
